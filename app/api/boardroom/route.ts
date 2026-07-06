@@ -96,7 +96,9 @@ export async function POST(req: Request) {
         if (!online) await delay(400);
       }
       await log(
-        `[CFO_AGENT]: JSON schema compiled. Confidence vector = ${cfo.confidence.toFixed(
+        `[CFO_AGENT]: Macro-sensitivity resolved. Adjusted runway ${cfo.predictiveMetrics.adjustedRunwayDays.toFixed(
+          1
+        )}d @ +5% burn · risk ${cfo.quantitativeRiskScore}/100 · conf ${cfo.confidence.toFixed(
           2
         )}.`
       );
@@ -125,7 +127,9 @@ export async function POST(req: Request) {
         if (!online) await delay(400);
       }
       await log(
-        `[COLLECTIONS_AGENT]: Counter-position compiled. Confidence vector = ${collections.confidence.toFixed(
+        `[COLLECTIONS_AGENT]: Receivables vector compiled. P(success) ${(
+          collections.predictiveMetrics.probabilityOfSuccess * 100
+        ).toFixed(1)}% · risk ${collections.quantitativeRiskScore}/100 · conf ${collections.confidence.toFixed(
           2
         )}.`
       );

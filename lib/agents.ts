@@ -1,11 +1,18 @@
-// Placeholder agent responses for the deterministic MVP.
+// Static mock boardroom for the deterministic fallback, plus the shared
+// AgentResponse type used across the app.
 //
-// In this milestone the agents are HARDCODED — no AI is called. These same
-// shapes will later be produced by Fireworks AI, with this data serving as the
-// offline fallback so the demo never breaks.
+// The agents are HARDCODED here (no AI). Fireworks produces the same shape at
+// runtime; this data is the offline fallback so the demo never breaks. Every
+// number is derived from the deterministic health check, so the fallback stays
+// internally consistent with the dashboard.
 
 import type { FinancialState } from "./financialState";
 import { checkFinancialHealth } from "./healthCheck";
+
+export interface AgentPredictiveMetrics {
+  adjustedRunwayDays: number; // days of runway under the agent's stress model
+  probabilityOfSuccess: number; // 0..1
+}
 
 export interface AgentResponse {
   agent: "CFO" | "Collections Manager";
@@ -14,43 +21,93 @@ export interface AgentResponse {
   position: string;
   recommendedAction: string;
   reasoning: string[];
-  risk: string;
+  statisticalVariance: string;
+  predictiveMetrics: AgentPredictiveMetrics;
+  quantitativeRiskScore: number; // 0..100 (higher = riskier)
   confidence: number; // 0..1
 }
 
-// Built from the live financial state so the numbers always match the
-// dashboard. Agents are only allowed to reference deterministic figures.
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
 export function getAgentResponses(state: FinancialState): AgentResponse[] {
   const health = checkFinancialHealth(state);
   const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
+  const dailyBurn = state.monthlyOpex / 30;
+
+  // ---- CFO — macro-economic sensitivity on runway ----------------------
+  const runwayHigh = round1(state.cashBalance / (dailyBurn * 0.95)); // −5% burn
+  const runwayLow = round1(state.cashBalance / (dailyBurn * 1.05)); // +5% burn
+  const cfoProbability = clamp01(
+    health.projectedCashBeforePayroll / state.payrollAmount
+  );
+  const cfoRiskScore = Math.round((1 - cfoProbability) * 100);
 
   const cfo: AgentResponse = {
     agent: "CFO",
-    role: "Focuses on liquidity, runway, and payroll stability.",
-    headline: "Preserve liquidity before payroll",
-    position: `The business is exposed to payroll risk in ${state.payrollDueInDays} days.`,
-    recommendedAction: "Delay the equipment purchase.",
+    role: "Elite quantitative VC analyst — liquidity, runway, and payroll stability.",
+    headline: "Preserve liquidity before the cash-zero point",
+    position: `The business is exposed to payroll risk in ${state.payrollDueInDays} days, with a payroll gap of ${rm(
+      health.payrollGap
+    )}.`,
+    recommendedAction: "Delay the equipment purchase to extend runway.",
     reasoning: [
-      `Cash balance is currently ${rm(state.cashBalance)}.`,
-      `Payroll obligation is ${rm(state.payrollAmount)}.`,
-      `Preserving ${rm(state.equipmentPurchase)} improves short-term liquidity.`,
+      `Cash balance is ${rm(state.cashBalance)} against a ${rm(
+        state.payrollAmount
+      )} payroll obligation.`,
+      `Daily operating burn is ${rm(dailyBurn)}, a baseline runway of ${round1(
+        health.runwayDays
+      )} days.`,
+      `Preserving ${rm(
+        state.equipmentPurchase
+      )} of liquidity directly defers the cash-zero point.`,
     ],
-    risk: "Delaying equipment may slow operational improvements.",
+    statisticalVariance: `Macro-economic sensitivity: a ±5% operating-burn swing moves the cash-zero runway between ${runwayLow} and ${runwayHigh} days.`,
+    predictiveMetrics: {
+      adjustedRunwayDays: runwayLow, // stressed (+5% burn) runway
+      probabilityOfSuccess: cfoProbability,
+    },
+    quantitativeRiskScore: cfoRiskScore,
     confidence: 0.82,
   };
 
+  // ---- Collections — probability-weighted receivables vector -----------
+  const totalReceivables = state.invoices.reduce((sum, i) => sum + i.amount, 0);
+  const alpha = state.invoices.find((i) => i.client === "Client Alpha");
+  const alphaExpected = alpha ? alpha.amount * alpha.collectionProbability : 0;
+  const collProbability = clamp01(
+    totalReceivables > 0 ? health.expectedCollections / totalReceivables : 0
+  );
+  const collAdjRunway = round1((state.cashBalance + alphaExpected) / dailyBurn);
+  const collRiskScore = Math.round((1 - collProbability) * 100);
+
   const collections: AgentResponse = {
     agent: "Collections Manager",
-    role: "Focuses on recovering receivables and improving cash inflow.",
-    headline: "Recover the highest-value receivable",
-    position: `Expected collections total ${rm(health.expectedCollections)} across ${state.invoices.length} invoices.`,
+    role: "Expert risk operations analyst — receivables recovery and cash inflow.",
+    headline: "Recover the highest-probability receivable",
+    position: `Acknowledging the CFO's liquidity constraint, the probability-weighted receivables vector totals ${rm(
+      health.expectedCollections
+    )} across ${state.invoices.length} invoices.`,
     recommendedAction: "Prioritise collecting from Client Alpha.",
     reasoning: [
-      "Client Alpha owes RM10,000 and is 45 days overdue.",
-      "Collection probability is 80%, the highest of the outstanding invoices.",
-      "Accelerating this payment directly closes the payroll gap.",
+      `Client Alpha owes ${rm(
+        alpha?.amount ?? 0
+      )} at an 80% settlement probability — the strongest vector.`,
+      `Under a standard B2B default matrix, Alpha contributes ${rm(
+        alphaExpected
+      )} of expected recovery.`,
+      `Recovering Alpha lifts adjusted runway to ${collAdjRunway} days, easing the cash-zero pressure.`,
     ],
-    risk: "Client Alpha is a high-relationship-risk account; aggressive chasing could strain the relationship.",
+    statisticalVariance: `Probability-weighted receivables vector: ${rm(
+      health.expectedCollections
+    )} expected of ${rm(
+      totalReceivables
+    )} outstanding; Client Alpha settlement modelled at 80% ± 10%.`,
+    predictiveMetrics: {
+      adjustedRunwayDays: collAdjRunway,
+      probabilityOfSuccess: collProbability,
+    },
+    quantitativeRiskScore: collRiskScore,
     confidence: 0.78,
   };
 

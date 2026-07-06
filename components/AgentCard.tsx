@@ -3,6 +3,20 @@
 
 import type { AgentResponse } from "@/lib/agents";
 
+// A single high-precision metric tile, monochrome, mono/tabular numerals.
+function StatTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-center">
+      <div className="text-[10px] uppercase tracking-wider text-neutral-500">
+        {label}
+      </div>
+      <div className="mt-0.5 font-mono text-base font-semibold tabular-nums tracking-tight text-neutral-900">
+        {value}
+      </div>
+    </div>
+  );
+}
+
 function ConfidenceVector({ confidence }: { confidence: number }) {
   const pct = Math.round(Math.min(1, Math.max(0, confidence)) * 100);
   return (
@@ -11,7 +25,9 @@ function ConfidenceVector({ confidence }: { confidence: number }) {
         <span className="uppercase tracking-wider text-neutral-500">
           Confidence Vector
         </span>
-        <span className="font-mono font-semibold text-neutral-900">{pct}%</span>
+        <span className="font-mono font-semibold tabular-nums text-neutral-900">
+          {pct}%
+        </span>
       </div>
       <div
         className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-neutral-200"
@@ -31,6 +47,8 @@ function ConfidenceVector({ confidence }: { confidence: number }) {
 }
 
 export default function AgentCard({ agent }: { agent: AgentResponse }) {
+  const { predictiveMetrics: pm } = agent;
+
   return (
     <div className="flex flex-col rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
       <div className="flex items-center justify-between">
@@ -65,9 +83,30 @@ export default function AgentCard({ agent }: { agent: AgentResponse }) {
         ))}
       </ul>
 
-      <div className="mt-4 flex gap-2 text-xs">
-        <span className="font-semibold text-neutral-900">Risk:</span>
-        <span className="text-neutral-500">{agent.risk}</span>
+      {/* Statistical variance narrative */}
+      <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+        <div className="text-xs uppercase tracking-wider text-neutral-500">
+          Statistical Variance
+        </div>
+        <div className="mt-1 text-sm text-neutral-600">
+          {agent.statisticalVariance}
+        </div>
+      </div>
+
+      {/* Predictive metrics — high-precision monochrome tiles */}
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <StatTile
+          label="Adj. Runway"
+          value={`${pm.adjustedRunwayDays.toFixed(1)}d`}
+        />
+        <StatTile
+          label="P(Success)"
+          value={`${(pm.probabilityOfSuccess * 100).toFixed(1)}%`}
+        />
+        <StatTile
+          label="Risk Score"
+          value={`${agent.quantitativeRiskScore}/100`}
+        />
       </div>
 
       {/* Confidence Vector meter — pushed to the card foot for alignment. */}

@@ -142,7 +142,7 @@ export async function POST(req: Request) {
         if (!online) await delay(400);
       }
       await log(
-        `[COLLECTIONS_AGENT]: Receivables vector compiled. Scenario Conf. ${(
+        `[COLLECTIONS_AGENT]: Receivables recovery compiled. Scenario Confidence ${(
           collections.predictiveMetrics.probabilityOfSuccess * 100
         ).toFixed(1)}% · risk ${collections.quantitativeRiskScore}/100 · conf ${collections.confidence.toFixed(
           2

@@ -14,10 +14,14 @@ cash, runway, and payroll risk.
 ## Current milestone: AI Boardroom MVP
 
 This build pairs a **deterministic core** — the safety net for the whole demo —
-with a live, sequential **AI boardroom**. Every number on the screen comes from
-plain, testable TypeScript logic; the CFO and Collections Manager agents (via
-Fireworks AI) add the natural-language analysis on top, and fall back to the
-static boardroom whenever a key is absent or a call fails.
+with a completed, live **sequential streaming multi-agent boardroom**. The CFO
+(Strategic Financial Officer) and Collections Manager (Risk Operations Manager)
+run as two sequential Fireworks AI inferences: the CFO's output is streamed into
+the Collections Manager's context so the two agents reach an explicit strategic
+disagreement, and every token of the orchestration is streamed to a live
+terminal console over NDJSON. Every number on the screen still comes from plain,
+testable TypeScript logic, and the whole boardroom falls back to a static,
+schema-identical mock whenever a key is absent or a call fails.
 
 ### The core loop
 

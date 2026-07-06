@@ -54,23 +54,37 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
-      {/* Critical alert — the first thing the user sees on load */}
+      {/* Executive hero */}
+      <header className="mb-8">
+        <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
+          <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
+          Executive Treasury Console
+        </div>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
+          Project Prism — Cash-Flow Stress-Testing Engine
+        </h1>
+        <p className="mt-3 max-w-2xl font-normal text-neutral-500">
+          Detect the crunch early, convene an AI boardroom, and stress-test each
+          mitigation pathway against deterministic treasury logic.
+        </p>
+      </header>
+
+      {/* Executive Crisis Command — high-urgency critical alert + primary trigger */}
       {health.payrollRisk && (
-        <section className="mb-8 rounded-2xl bg-neutral-900 p-6 text-white shadow-md sm:p-7">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <section className="mb-12 rounded-2xl bg-neutral-900 p-6 text-white shadow-md sm:p-7">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/70">
-                <span aria-hidden>⚠️</span> Critical Alert
+                <span aria-hidden>🚨</span> Emergency Board Meeting Required
               </div>
-              <h2 className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
-                Emergency Board Meeting Required
-              </h2>
-              <p className="mt-1 text-sm text-neutral-300">
-                Payroll risk detected. Projected cash falls short by{" "}
-                <span className="font-semibold text-white">
-                  {rm(health.payrollGap)}
-                </span>{" "}
-                before the deadline in {state.payrollDueInDays} days.
+              <p className="mt-2 text-lg font-semibold tracking-tight sm:text-xl">
+                Critical payroll risk detected. Projected baseline cash-flow
+                falls short by RM4,567 before the {state.payrollDueInDays}-day
+                deadline.
+              </p>
+              <p className="mt-2 text-sm text-neutral-300">
+                The Board of Directors is standing by. Convene the boardroom
+                immediately to stress-test corporate mitigation pathways.
               </p>
             </div>
             <button
@@ -87,29 +101,6 @@ export default function Home() {
           </div>
         </section>
       )}
-
-      {/* Header */}
-      <header className="mb-12">
-        <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-          <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
-          Project Prism
-        </div>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
-          Explore financial decisions before you make them.
-        </h1>
-        <p className="mt-3 max-w-2xl font-normal text-neutral-500">
-          An AI-powered scenario simulator for SME owners. See a cash crunch
-          early, weigh the trade-offs, and simulate the outcome — all backed by
-          deterministic financial logic.
-        </p>
-        <div className="mt-4 text-sm text-neutral-500">
-          Viewing:{" "}
-          <span className="font-medium text-neutral-900">
-            {state.companyName}
-          </span>{" "}
-          · Small B2B supplier for cafes and restaurants
-        </div>
-      </header>
 
       {/* Dashboard metrics */}
       <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

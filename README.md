@@ -79,13 +79,18 @@ project-prism/
 
 `checkFinancialHealth(state)` computes:
 
-| Value                        | Formula                                        |
-| ---------------------------- | ---------------------------------------------- |
-| Expected collections         | `sum(invoice.amount × collectionProbability)`  |
-| Projected cash before payroll| `cashBalance + expectedCollections`            |
-| Payroll gap                  | `payrollAmount − projectedCashBeforePayroll`   |
-| Payroll risk                 | `payrollGap > 0`                               |
-| Runway days                  | `cashBalance ÷ (monthlyOpex ÷ 30)`             |
+| Value                        | Formula                                                         |
+| ---------------------------- | --------------------------------------------------------------- |
+| Expected collections         | `sum(invoice.amount × collectionProbability)`                   |
+| Operating burn to payroll    | `monthlyOpex ÷ 30 × payrollDueInDays`                           |
+| Projected cash before payroll| `cashBalance + expectedCollections − operatingBurnToPayroll`    |
+| Payroll gap                  | `payrollAmount − projectedCashBeforePayroll`                    |
+| Payroll risk                 | `payrollGap > 0`                                                |
+| Runway days                  | `cashBalance ÷ (monthlyOpex ÷ 30)`                             |
+
+> Projected cash before payroll nets out `operatingBurnToPayroll` — the
+> operating cash the business burns over the days until payroll — so the
+> deterministic engine reflects the real cash crunch ahead of payday.
 
 `simulateDecision(state, action)` supports four actions — *Prioritize Client
 Alpha*, *Delay Equipment Purchase*, *Offer Early Payment Discount*, and *Do

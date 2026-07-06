@@ -14,8 +14,8 @@ export default function BoardroomStatus({
   doneCount,
 }: BoardroomStatusProps) {
   return (
-    <div className="rounded-2xl border border-brand/40 bg-brand/5 p-6">
-      <div className="mb-4 flex items-center gap-2 text-sm font-medium text-accent">
+    <div className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-sm transition-all duration-200">
+      <div className="mb-4 flex items-center gap-2 text-sm font-medium text-neutral-900">
         <Spinner />
         Convening the boardroom…
       </div>
@@ -30,22 +30,22 @@ export default function BoardroomStatus({
             <li key={stepNumber} className="flex items-center gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center">
                 {isDone ? (
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-good/20 text-good">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-900 text-xs text-white">
                     ✓
                   </span>
                 ) : isActive ? (
                   <Spinner />
                 ) : (
-                  <span className="h-2.5 w-2.5 rounded-full bg-edge" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
                 )}
               </span>
               <span
                 className={
                   isDone
-                    ? "text-sm text-slate-300"
+                    ? "text-sm text-neutral-500"
                     : isActive
-                      ? "text-sm font-medium text-white"
-                      : "text-sm text-slate-500"
+                      ? "text-sm font-medium text-neutral-900"
+                      : "text-sm text-neutral-400"
                 }
               >
                 {label}
@@ -61,7 +61,7 @@ export default function BoardroomStatus({
 function Spinner() {
   return (
     <span
-      className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-accent/30 border-t-accent"
+      className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900"
       aria-hidden
     />
   );

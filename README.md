@@ -98,17 +98,19 @@ project-prism/
 │   ├── page.tsx            # Dashboard: wires everything together
 │   └── globals.css         # Tailwind + background styling
 ├── components/
-│   ├── MetricCard.tsx      # Dashboard metric card (with before/after)
-│   ├── AgentCard.tsx       # Agent card (static or AI-generated)
-│   ├── BoardroomStatus.tsx # Live "Step 1 → Step 2" loading indicator
-│   ├── DecisionPanel.tsx   # Owner decision buttons
-│   └── CashFlowChart.tsx   # Projected cash chart (Recharts)
+│   ├── MetricCard.tsx           # Dashboard metric card (with before/after)
+│   ├── AgentCard.tsx            # Agent card: reasoning + predictive metrics
+│   ├── BoardroomStatus.tsx      # Compact sequential step indicator
+│   ├── OrchestrationConsole.tsx # Live monospace state-trace terminal
+│   ├── DecisionPanel.tsx        # Owner decision buttons
+│   └── CashFlowChart.tsx        # Projected cash chart (Recharts)
 ├── lib/
 │   ├── financialState.ts   # Hardcoded sample SME state
 │   ├── healthCheck.ts      # checkFinancialHealth() — deterministic
 │   ├── simulation.ts       # simulateDecision() — deterministic (unchanged)
 │   ├── agents.ts           # Static mock boardroom (fallback data + shared type)
 │   ├── fireworks.ts        # Server-only Fireworks calls + schema enforcement
+│   ├── boardroom.ts        # Shared streamed-event protocol + phase types
 │   └── useBoardroom.ts     # Client hook: streams /api/boardroom
 ├── MASTER_SPEC.md          # Full product spec
 ├── BUILD_PLAN.md           # Milestone plan

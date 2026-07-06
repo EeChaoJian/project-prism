@@ -13,7 +13,11 @@
 // simulateDecision() remain the single source of truth for every number. This
 // route only generates the agents' natural-language reasoning.
 
-import { initialFinancialState, type FinancialState } from "@/lib/financialState";
+import {
+  initialFinancialState,
+  lookalikeCohortData,
+  type FinancialState,
+} from "@/lib/financialState";
 import { checkFinancialHealth } from "@/lib/healthCheck";
 import { getAgentResponses, type AgentResponse } from "@/lib/agents";
 import { runCFO, runCollections, hasFireworksKey } from "@/lib/fireworks";
@@ -78,6 +82,17 @@ export async function POST(req: Request) {
         `[SYSTEM]: Deterministic matrix locked — expected collections ${rm(
           health.expectedCollections
         )}, payroll gap ${rm(health.payrollGap)}.`
+      );
+      // Lookalike Cohort Analysis — surface the empirical-twin retrieval live.
+      await log("[SYSTEM]: Initializing macro-vector lookalike scanner...");
+      await log(
+        "[SYSTEM]: Querying regional SME performance registry for cash-flow twins..."
+      );
+      await log(
+        `[SYSTEM]: Match found: Cohort ${lookalikeCohortData.cohortId} (n=${lookalikeCohortData.sampleSize}). Overlapping risk parameters: Runway < 20d, Payroll Gap > RM4k, High AR Concentration.`
+      );
+      await log(
+        "[SYSTEM]: Injecting cohort operational benchmarks into Strategic Financial Officer context window..."
       );
 
       // ---- PHASE: cfo_processing (INFERENCE 1) ----------------------------

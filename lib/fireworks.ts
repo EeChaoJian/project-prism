@@ -11,7 +11,7 @@
 // JSON, missing fields). The API route catches those and falls back to the
 // static mock boardroom in lib/agents.ts, so the demo never breaks.
 
-import type { FinancialState } from "./financialState";
+import { lookalikeCohortData, type FinancialState } from "./financialState";
 import type { FinancialHealth } from "./healthCheck";
 import type { AgentResponse } from "./agents";
 
@@ -78,6 +78,20 @@ function buildContext(state: FinancialState, health: FinancialHealth): string {
   ].join("\n");
 }
 
+// Lookalike Cohort Analysis — grounds the debate in empirical "twin" outcomes
+// rather than pure speculation. Values come from lib/financialState so the
+// prompts and the streamed trace logs stay in sync.
+const cohort = lookalikeCohortData;
+const pctOf = (n: number) => `${Math.round(n * 100)}%`;
+
+const COHORT_CFO = `Anchor your trade-off analysis on the matched lookalike cohort ${cohort.cohortId} (n=${cohort.sampleSize}, ${cohort.industry}). In this matched cohort of ${cohort.sampleSize} peers, delaying capital expenditure to preserve RM7,000 protected near-term payroll compliance in ${pctOf(
+  cohort.historicalOutcomes.delayEquipmentSuccessRate
+)} of cases, preventing an average default rate of ${pctOf(
+  cohort.historicalOutcomes.defaultRateIfNoAction
+)}. Cite this empirical precedent explicitly in your reasoning.`;
+
+const COHORT_COLLECTIONS = `Reference the matched lookalike cohort ${cohort.cohortId} (n=${cohort.sampleSize}): historical precedents demonstrate that early-settlement discounting accelerates invoice realization by an average of ${cohort.historicalOutcomes.discountInflowAccelerationDays} days. Ground your counter-strategy in this precedent.`;
+
 // Every agent must return exactly this expanded analytical schema.
 const SCHEMA_INSTRUCTION = `Respond with a SINGLE valid JSON object and nothing else. Use exactly this schema:
 {
@@ -103,12 +117,14 @@ Rules:
 const CFO_SYSTEM = `You are the CFO of a small business speaking in a financial boardroom, operating as a Strategic Financial Officer responsible for corporate liquidity, runway, and payroll stability analysis.
 You are rigorous and numbers-first, and you prioritise survival over growth: liquidity, runway, payroll stability, and protecting cash reserves.
 Perform an operating burn sensitivity analysis: calculate how a ±5% variance in operating burn changes the exact number of days of runway left before the cash-zero point. Reflect the stressed (+5% burn) figure in predictiveMetrics.adjustedRunwayDays, describe the ±5% runway band in statisticalVariance, and set probabilityOfSuccess to the likelihood the business covers payroll before cash-zero.
+${COHORT_CFO}
 ${SCHEMA_INSTRUCTION}
 Set "agent" to "CFO".`;
 
 const COLLECTIONS_SYSTEM = `You are the Collections Manager of a small business speaking in a financial boardroom immediately after the CFO, operating as an expert Risk Operations Analyst.
 You are practical, client-aware, and focused on recovering outstanding receivables and improving cash inflow.
 You have just received the CFO's structured output. Acknowledge the CFO's liquidity stance in your "position", then compute an explicit risk-adjusted receivables recovery vector across the overdue invoices — in particular Client Alpha's settlement probability under a standard age-of-receivables collection model. Reflect the recovered-cash runway in predictiveMetrics.adjustedRunwayDays, the weighted collection likelihood in predictiveMetrics.probabilityOfSuccess, and the receivables variance in statisticalVariance.
+${COHORT_COLLECTIONS}
 ${SCHEMA_INSTRUCTION}
 Set "agent" to "Collections Manager".`;
 

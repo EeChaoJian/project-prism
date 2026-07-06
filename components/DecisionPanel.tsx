@@ -17,14 +17,26 @@ export default function DecisionPanel({ onDecide, selected }: DecisionPanelProps
           <button
             key={option.action}
             onClick={() => onDecide(option.action)}
-            className={`rounded-xl border p-4 text-left transition ${
+            className={`rounded-xl border p-4 text-left shadow-sm transition-all duration-200 ${
               isSelected
-                ? "border-brand bg-brand/15"
-                : "border-edge bg-surface hover:border-brand/60 hover:bg-surface/80"
+                ? "border-neutral-900 bg-neutral-900"
+                : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md"
             }`}
           >
-            <div className="font-medium text-white">{option.label}</div>
-            <div className="mt-1 text-sm text-slate-400">{option.description}</div>
+            <div
+              className={`font-medium ${
+                isSelected ? "text-white" : "text-neutral-900"
+              }`}
+            >
+              {option.label}
+            </div>
+            <div
+              className={`mt-1 text-sm ${
+                isSelected ? "text-neutral-400" : "text-neutral-500"
+              }`}
+            >
+              {option.description}
+            </div>
           </button>
         );
       })}

@@ -79,8 +79,8 @@ export default function Home() {
               </div>
               <p className="mt-2 text-lg font-semibold tracking-tight sm:text-xl">
                 Critical payroll risk detected. Projected baseline cash-flow
-                falls short by RM4,567 before the {state.payrollDueInDays}-day
-                deadline.
+                falls short by {rm(health.payrollGap)} before the{" "}
+                {state.payrollDueInDays}-day deadline.
               </p>
               <p className="mt-2 text-sm text-neutral-300">
                 The Board of Directors is standing by. Convene the boardroom

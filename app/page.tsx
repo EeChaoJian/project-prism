@@ -5,9 +5,10 @@ import MetricCard from "@/components/MetricCard";
 import AgentCard from "@/components/AgentCard";
 import DecisionPanel from "@/components/DecisionPanel";
 import CashFlowChart from "@/components/CashFlowChart";
+import BoardroomStatus from "@/components/BoardroomStatus";
 import { initialFinancialState } from "@/lib/financialState";
 import { checkFinancialHealth } from "@/lib/healthCheck";
-import { getAgentResponses } from "@/lib/agents";
+import { useBoardroom, BOARDROOM_STEPS, type BoardSource } from "@/lib/useBoardroom";
 import {
   simulateDecision,
   type DecisionAction,
@@ -21,7 +22,10 @@ export default function Home() {
   // separate result we render alongside it as before/after.
   const state = initialFinancialState;
   const health = checkFinancialHealth(state);
-  const agents = getAgentResponses(state);
+
+  // The AI boardroom is generated on demand via /api/boardroom.
+  const { status: boardStatus, board, activeStep, source, convene } =
+    useBoardroom();
 
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [selected, setSelected] = useState<DecisionAction | null>(null);
@@ -102,19 +106,66 @@ export default function Home() {
 
       {/* Agent boardroom */}
       <section className="mb-10">
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-white">The Boardroom</h2>
-          <p className="text-sm text-slate-400">
-            Two specialised agents weigh in on the same financial state. (These
-            responses are hardcoded in this milestone — AI integration comes
-            next.)
-          </p>
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-white">The Boardroom</h2>
+            <p className="max-w-xl text-sm text-slate-400">
+              Two specialised AI agents reason sequentially over the same
+              financial state — the CFO analyses liquidity first, then the
+              Collections Manager reads the CFO&apos;s stance and responds.
+            </p>
+          </div>
+          <button
+            onClick={() => convene(state)}
+            disabled={boardStatus === "running"}
+            className="shrink-0 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {boardStatus === "idle"
+              ? "Convene the Boardroom"
+              : boardStatus === "running"
+                ? "Convening…"
+                : "Re-convene the Boardroom"}
+          </button>
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          {agents.map((agent) => (
-            <AgentCard key={agent.agent} agent={agent} />
-          ))}
-        </div>
+
+        {boardStatus === "idle" && (
+          <div className="rounded-2xl border border-dashed border-edge bg-surface/40 p-8 text-center text-sm text-slate-400">
+            Click{" "}
+            <span className="font-medium text-slate-200">
+              Convene the Boardroom
+            </span>{" "}
+            to generate the CFO and Collections Manager analysis for the current
+            financial state.
+          </div>
+        )}
+
+        {boardStatus === "running" && (
+          <div className="space-y-4">
+            <BoardroomStatus
+              steps={BOARDROOM_STEPS}
+              activeStep={activeStep}
+              doneCount={board.length}
+            />
+            {board.length > 0 && (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {board.map((agent) => (
+                  <AgentCard key={agent.agent} agent={agent} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {boardStatus === "done" && (
+          <div className="space-y-3">
+            <SourceBadge source={source} />
+            <div className="grid gap-4 lg:grid-cols-2">
+              {board.map((agent) => (
+                <AgentCard key={agent.agent} agent={agent} />
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Owner decision */}
@@ -175,6 +226,38 @@ export default function Home() {
         not AI.
       </footer>
     </main>
+  );
+}
+
+function SourceBadge({ source }: { source: BoardSource | null }) {
+  const config: Record<
+    BoardSource,
+    { dot: string; text: string; label: string }
+  > = {
+    fireworks: {
+      dot: "bg-good",
+      text: "text-good",
+      label: "Generated live by Fireworks AI · Llama 3.1 70B",
+    },
+    "partial-fallback": {
+      dot: "bg-warn",
+      text: "text-warn",
+      label: "Partial: one agent live, one static fallback",
+    },
+    fallback: {
+      dot: "bg-warn",
+      text: "text-warn",
+      label:
+        "Offline fallback — static boardroom (set FIREWORKS_API_KEY for live AI)",
+    },
+  };
+  const c = source ? config[source] : config.fallback;
+
+  return (
+    <div className="flex items-center gap-2 text-xs text-slate-400">
+      <span className={`inline-block h-2 w-2 rounded-full ${c.dot}`} />
+      <span className={c.text}>{c.label}</span>
+    </div>
   );
 }
 

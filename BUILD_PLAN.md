@@ -27,18 +27,24 @@ payroll alert appears, decisions update metrics + chart immediately.
 
 ---
 
-## ⏳ Milestone 2 — AI agents (not started)
+## ✅ Milestone 2 — Sequential AI boardroom (this build)
 
-Goal: replace the hardcoded agent data with live reasoning.
+Goal: replace the hardcoded agent cards with live, sequential AI reasoning.
 
-- [ ] Fireworks AI integration (Gemma model if available)
-- [ ] Shared financial context passed to each agent
-- [ ] Structured JSON agent output (same shape as `AgentResponse`)
-- [ ] Hardcoded fallback responses if the API fails (already in place)
-- [ ] Environment variables for the API key
+- [x] Fireworks AI integration (`llama-v3p1-70b-instruct`)
+- [x] Server-side route `/api/boardroom` orchestrating two inferences
+- [x] INFERENCE 1 (CFO) → structured JSON strategy
+- [x] INFERENCE 2 (Collections Manager) receives the CFO's literal output and
+      responds, acknowledging the CFO's structural stance
+- [x] Shared financial context passed to each agent (MASTER_SPEC §14)
+- [x] Structured JSON output, schema-validated server-side
+- [x] Try/catch guards → automatic fallback to the static mock boardroom
+- [x] Live sequential loading indicator (Step 1 → Step 2) via streamed NDJSON
+- [x] Environment variables for the API key (`.env.example`)
 
-**Guardrail:** the AI explains trade-offs and recommends actions, but it must
-never invent financial numbers. All numeric outcomes stay in `simulation.ts`.
+**Guardrail (held):** the deterministic engine in `simulation.ts` and
+`healthCheck.ts` is unchanged. The AI produces reasoning only; every number
+comes from that engine.
 
 ---
 

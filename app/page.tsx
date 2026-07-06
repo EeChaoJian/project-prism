@@ -6,9 +6,11 @@ import AgentCard from "@/components/AgentCard";
 import DecisionPanel from "@/components/DecisionPanel";
 import CashFlowChart from "@/components/CashFlowChart";
 import BoardroomStatus from "@/components/BoardroomStatus";
+import OrchestrationConsole from "@/components/OrchestrationConsole";
 import { initialFinancialState } from "@/lib/financialState";
 import { checkFinancialHealth } from "@/lib/healthCheck";
-import { useBoardroom, BOARDROOM_STEPS, type BoardSource } from "@/lib/useBoardroom";
+import { useBoardroom } from "@/lib/useBoardroom";
+import { BOARDROOM_STEPS, type BoardSource } from "@/lib/boardroom";
 import {
   simulateDecision,
   type DecisionAction,
@@ -24,8 +26,15 @@ export default function Home() {
   const health = checkFinancialHealth(state);
 
   // The AI boardroom is generated on demand via /api/boardroom.
-  const { status: boardStatus, board, activeStep, source, convene } =
-    useBoardroom();
+  const {
+    status: boardStatus,
+    phase,
+    logs,
+    board,
+    activeStep,
+    source,
+    convene,
+  } = useBoardroom();
 
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [selected, setSelected] = useState<DecisionAction | null>(null);
@@ -139,13 +148,28 @@ export default function Home() {
           </div>
         )}
 
-        {boardStatus === "running" && (
+        {boardStatus !== "idle" && (
           <div className="space-y-4">
-            <BoardroomStatus
-              steps={BOARDROOM_STEPS}
-              activeStep={activeStep}
-              doneCount={board.length}
+            {/* Live orchestration console — the state trace of the API loop. */}
+            <OrchestrationConsole
+              logs={logs}
+              phase={phase}
+              active={boardStatus === "running"}
             />
+
+            {/* Compact two-step indicator while streaming. */}
+            {boardStatus === "running" && (
+              <BoardroomStatus
+                steps={BOARDROOM_STEPS}
+                activeStep={activeStep}
+                doneCount={board.length}
+              />
+            )}
+
+            {/* Provenance of the final result. */}
+            {boardStatus === "done" && <SourceBadge source={source} />}
+
+            {/* Agent cards — revealed progressively as they arrive. */}
             {board.length > 0 && (
               <div className="grid gap-4 lg:grid-cols-2">
                 {board.map((agent) => (
@@ -153,17 +177,6 @@ export default function Home() {
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {boardStatus === "done" && (
-          <div className="space-y-3">
-            <SourceBadge source={source} />
-            <div className="grid gap-4 lg:grid-cols-2">
-              {board.map((agent) => (
-                <AgentCard key={agent.agent} agent={agent} />
-              ))}
-            </div>
           </div>
         )}
       </section>

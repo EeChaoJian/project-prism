@@ -2,10 +2,10 @@
 //
 // This module is server-only (it reads FIREWORKS_API_KEY and calls the
 // Fireworks inference API). It runs two SEQUENTIAL inferences:
-//   1. The CFO — an elite quantitative VC analyst — models macro-economic
+//   1. The CFO — a Strategic Financial Officer — models operating burn
 //      sensitivity of runway to a ±5% operating-burn variance.
 //   2. The Collections Manager — a risk operations analyst — reads the CFO's
-//      literal output and computes a probability-weighted receivables vector.
+//      literal output and computes a risk-adjusted receivables recovery vector.
 //
 // Every function here THROWS on any failure (missing key, HTTP error, bad
 // JSON, missing fields). The API route catches those and falls back to the
@@ -24,7 +24,7 @@ const FIREWORKS_URL =
 
 // The two agents whose responses we generate, and the role blurb the UI shows.
 const ROLE_BY_AGENT: Record<AgentResponse["agent"], string> = {
-  CFO: "Elite quantitative VC analyst — liquidity, runway, and payroll stability.",
+  CFO: "Strategic Financial Officer — corporate liquidity, runway, and payroll stability analysis.",
   "Collections Manager":
     "Expert risk operations analyst — receivables recovery and cash inflow.",
 };
@@ -100,15 +100,15 @@ Rules:
 - "confidence" is a number between 0 and 1.
 - Only reference the financial figures provided. Compute every derived metric from them; never invent raw numbers.`;
 
-const CFO_SYSTEM = `You are the CFO of a small business speaking in a financial boardroom, operating as an elite, quantitative venture-capital analyst.
+const CFO_SYSTEM = `You are the CFO of a small business speaking in a financial boardroom, operating as a Strategic Financial Officer responsible for corporate liquidity, runway, and payroll stability analysis.
 You are rigorous and numbers-first, and you prioritise survival over growth: liquidity, runway, payroll stability, and protecting cash reserves.
-Perform a Macro-Economic Sensitivity analysis: calculate how a ±5% variance in operating burn changes the exact number of days of runway left before the cash-zero point. Reflect the stressed (+5% burn) figure in predictiveMetrics.adjustedRunwayDays, describe the ±5% runway band in statisticalVariance, and set probabilityOfSuccess to the likelihood the business covers payroll before cash-zero.
+Perform an operating burn sensitivity analysis: calculate how a ±5% variance in operating burn changes the exact number of days of runway left before the cash-zero point. Reflect the stressed (+5% burn) figure in predictiveMetrics.adjustedRunwayDays, describe the ±5% runway band in statisticalVariance, and set probabilityOfSuccess to the likelihood the business covers payroll before cash-zero.
 ${SCHEMA_INSTRUCTION}
 Set "agent" to "CFO".`;
 
 const COLLECTIONS_SYSTEM = `You are the Collections Manager of a small business speaking in a financial boardroom immediately after the CFO, operating as an expert Risk Operations Analyst.
 You are practical, client-aware, and focused on recovering outstanding receivables and improving cash inflow.
-You have just received the CFO's structured output. Acknowledge the CFO's liquidity stance in your "position", then compute an explicit Probability-Weighted Receivables Vector across the overdue invoices — in particular Client Alpha's settlement probability under standard industry default matrices. Reflect the recovered-cash runway in predictiveMetrics.adjustedRunwayDays, the weighted collection likelihood in predictiveMetrics.probabilityOfSuccess, and the receivables variance in statisticalVariance.
+You have just received the CFO's structured output. Acknowledge the CFO's liquidity stance in your "position", then compute an explicit risk-adjusted receivables recovery vector across the overdue invoices — in particular Client Alpha's settlement probability under a standard age-of-receivables collection model. Reflect the recovered-cash runway in predictiveMetrics.adjustedRunwayDays, the weighted collection likelihood in predictiveMetrics.probabilityOfSuccess, and the receivables variance in statisticalVariance.
 ${SCHEMA_INSTRUCTION}
 Set "agent" to "Collections Manager".`;
 
@@ -224,7 +224,7 @@ function parseAgent(
   return normalizeAgent(obj, agent);
 }
 
-// INFERENCE 1 — the CFO's macro-economic sensitivity analysis.
+// INFERENCE 1 — the CFO's operating burn sensitivity analysis.
 export async function runCFO(
   state: FinancialState,
   health: FinancialHealth
@@ -237,7 +237,7 @@ export async function runCFO(
 }
 
 // INFERENCE 2 — the Collections Manager reads the CFO's literal output and
-// computes a probability-weighted receivables vector in response.
+// computes a risk-adjusted receivables recovery vector in response.
 export async function runCollections(
   state: FinancialState,
   health: FinancialHealth,
@@ -249,7 +249,7 @@ export async function runCollections(
     "The CFO has already delivered this position (their verbatim JSON output):",
     JSON.stringify(cfo, null, 2),
     "",
-    "Read the CFO's stance carefully. Acknowledge their liquidity position, then compute the probability-weighted receivables vector they underweight.",
+    "Read the CFO's stance carefully. Acknowledge their liquidity position, then compute the risk-adjusted receivables recovery vector they underweight.",
   ].join("\n");
 
   const content = await fireworksChat([

@@ -27,7 +27,8 @@ export const decisionOptions: DecisionOption[] = [
   {
     action: "delay_equipment",
     label: "Delay Equipment Purchase",
-    description: "Postpone the RM7,000 equipment spend to protect cash.",
+    description:
+      "Halt a scheduled, near-term RM7,000 equipment payment and keep that reserved cash outflow in the account.",
   },
   {
     action: "early_payment_discount",
@@ -83,7 +84,7 @@ export function simulateDecision(
       updatedState.cashBalance += 7000;
       updatedState.equipmentPurchase = 0;
       explanation =
-        "The equipment purchase was delayed to protect liquidity, preserving RM7,000 of cash ahead of payroll.";
+        "The equipment purchase was delayed, halting a pending RM7,000 cash outflow and retaining that liquidity in the main account to cover payroll.";
       break;
     }
     case "early_payment_discount": {

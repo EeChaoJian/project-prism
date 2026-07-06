@@ -96,7 +96,7 @@ export async function POST(req: Request) {
         if (!online) await delay(400);
       }
       await log(
-        `[CFO_AGENT]: Macro-sensitivity resolved. Adjusted runway ${cfo.predictiveMetrics.adjustedRunwayDays.toFixed(
+        `[CFO_AGENT]: Operating-burn sensitivity resolved. Adjusted runway ${cfo.predictiveMetrics.adjustedRunwayDays.toFixed(
           1
         )}d @ +5% burn · risk ${cfo.quantitativeRiskScore}/100 · conf ${cfo.confidence.toFixed(
           2
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
         if (!online) await delay(400);
       }
       await log(
-        `[COLLECTIONS_AGENT]: Receivables vector compiled. P(success) ${(
+        `[COLLECTIONS_AGENT]: Receivables vector compiled. Scenario Conf. ${(
           collections.predictiveMetrics.probabilityOfSuccess * 100
         ).toFixed(1)}% · risk ${collections.quantitativeRiskScore}/100 · conf ${collections.confidence.toFixed(
           2

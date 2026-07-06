@@ -11,12 +11,13 @@ cash, runway, and payroll risk.
 
 ---
 
-## Current milestone: Deterministic MVP
+## Current milestone: AI Boardroom MVP
 
-This build is the **deterministic core** — the safety net for the whole demo.
-There is **no AI yet**. Every number on the screen comes from plain, testable
-TypeScript logic. The agent cards are hardcoded placeholders that will later be
-produced by Fireworks AI, with this same data as the offline fallback.
+This build pairs a **deterministic core** — the safety net for the whole demo —
+with a live, sequential **AI boardroom**. Every number on the screen comes from
+plain, testable TypeScript logic; the CFO and Collections Manager agents (via
+Fireworks AI) add the natural-language analysis on top, and fall back to the
+static boardroom whenever a key is absent or a call fails.
 
 ### The core loop
 

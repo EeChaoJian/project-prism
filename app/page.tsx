@@ -54,6 +54,40 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
+      {/* Critical alert — the first thing the user sees on load */}
+      {health.payrollRisk && (
+        <section className="mb-8 rounded-2xl bg-neutral-900 p-6 text-white shadow-md sm:p-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/70">
+                <span aria-hidden>⚠️</span> Critical Alert
+              </div>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
+                Emergency Board Meeting Required
+              </h2>
+              <p className="mt-1 text-sm text-neutral-300">
+                Payroll risk detected. Projected cash falls short by{" "}
+                <span className="font-semibold text-white">
+                  {rm(health.payrollGap)}
+                </span>{" "}
+                before the deadline in {state.payrollDueInDays} days.
+              </p>
+            </div>
+            <button
+              onClick={() => convene(state)}
+              disabled={boardStatus === "running"}
+              className="shrink-0 rounded-xl bg-white px-5 py-2.5 font-medium text-neutral-900 shadow-sm transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {boardStatus === "idle"
+                ? "Convene the Boardroom"
+                : boardStatus === "running"
+                  ? "Convening…"
+                  : "Re-convene the Boardroom"}
+            </button>
+          </div>
+        </section>
+      )}
+
       {/* Header */}
       <header className="mb-12">
         <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
@@ -110,19 +144,6 @@ export default function Home() {
         />
       </section>
 
-      {/* Payroll risk alert — clean, minimal warning block */}
-      {health.payrollRisk && (
-        <section className="mb-12 rounded-2xl bg-neutral-900 p-6 text-white shadow-md">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">⚠</span>
-            <span className="font-semibold tracking-tight">
-              Emergency Board Meeting Required
-            </span>
-          </div>
-          <p className="mt-2 text-sm text-neutral-300">{health.alertMessage}</p>
-        </section>
-      )}
-
       {/* Agent boardroom */}
       <section className="mb-12">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -136,17 +157,19 @@ export default function Home() {
               Collections Manager reads the CFO&apos;s stance and responds.
             </p>
           </div>
-          <button
-            onClick={() => convene(state)}
-            disabled={boardStatus === "running"}
-            className={`shrink-0 ${PRIMARY_BUTTON} disabled:cursor-not-allowed disabled:opacity-50`}
-          >
-            {boardStatus === "idle"
-              ? "Convene the Boardroom"
-              : boardStatus === "running"
+          {/* The primary Convene CTA lives in the critical alert above; here we
+              only surface the in-context control once a run has started. */}
+          {boardStatus !== "idle" && (
+            <button
+              onClick={() => convene(state)}
+              disabled={boardStatus === "running"}
+              className={`shrink-0 ${PRIMARY_BUTTON} disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {boardStatus === "running"
                 ? "Convening…"
                 : "Re-convene the Boardroom"}
-          </button>
+            </button>
+          )}
         </div>
 
         {boardStatus === "idle" && (

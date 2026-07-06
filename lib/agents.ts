@@ -35,7 +35,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
   const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
   const dailyBurn = state.monthlyOpex / 30;
 
-  // ---- CFO — macro-economic sensitivity on runway ----------------------
+  // ---- CFO — operating burn sensitivity on runway ----------------------
   const runwayHigh = round1(state.cashBalance / (dailyBurn * 0.95)); // −5% burn
   const runwayLow = round1(state.cashBalance / (dailyBurn * 1.05)); // +5% burn
   const cfoProbability = clamp01(
@@ -45,7 +45,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
 
   const cfo: AgentResponse = {
     agent: "CFO",
-    role: "Elite quantitative VC analyst — liquidity, runway, and payroll stability.",
+    role: "Strategic Financial Officer — corporate liquidity, runway, and payroll stability analysis.",
     headline: "Preserve liquidity before the cash-zero point",
     position: `The business is exposed to payroll risk in ${state.payrollDueInDays} days, with a payroll gap of ${rm(
       health.payrollGap
@@ -62,7 +62,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
         state.equipmentPurchase
       )} of liquidity directly defers the cash-zero point.`,
     ],
-    statisticalVariance: `Macro-economic sensitivity: a ±5% operating-burn swing moves the cash-zero runway between ${runwayLow} and ${runwayHigh} days.`,
+    statisticalVariance: `Operating burn sensitivity: a ±5% operating-burn swing moves the cash-zero runway between ${runwayLow} and ${runwayHigh} days.`,
     predictiveMetrics: {
       adjustedRunwayDays: runwayLow, // stressed (+5% burn) runway
       probabilityOfSuccess: cfoProbability,
@@ -71,7 +71,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
     confidence: 0.82,
   };
 
-  // ---- Collections — probability-weighted receivables vector -----------
+  // ---- Collections — risk-adjusted receivables recovery vector ---------
   const totalReceivables = state.invoices.reduce((sum, i) => sum + i.amount, 0);
   const alpha = state.invoices.find((i) => i.client === "Client Alpha");
   const alphaExpected = alpha ? alpha.amount * alpha.collectionProbability : 0;
@@ -85,7 +85,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
     agent: "Collections Manager",
     role: "Expert risk operations analyst — receivables recovery and cash inflow.",
     headline: "Recover the highest-probability receivable",
-    position: `Acknowledging the CFO's liquidity constraint, the probability-weighted receivables vector totals ${rm(
+    position: `Acknowledging the CFO's liquidity constraint, the risk-adjusted receivables recovery vector totals ${rm(
       health.expectedCollections
     )} across ${state.invoices.length} invoices.`,
     recommendedAction: "Prioritise collecting from Client Alpha.",
@@ -93,12 +93,12 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
       `Client Alpha owes ${rm(
         alpha?.amount ?? 0
       )} at an 80% settlement probability — the strongest vector.`,
-      `Under a standard B2B default matrix, Alpha contributes ${rm(
+      `Under a standard age-of-receivables collection model, Alpha contributes ${rm(
         alphaExpected
       )} of expected recovery.`,
       `Recovering Alpha lifts adjusted runway to ${collAdjRunway} days, easing the cash-zero pressure.`,
     ],
-    statisticalVariance: `Probability-weighted receivables vector: ${rm(
+    statisticalVariance: `Risk-adjusted receivables recovery vector: ${rm(
       health.expectedCollections
     )} expected of ${rm(
       totalReceivables

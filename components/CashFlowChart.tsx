@@ -37,14 +37,13 @@ function projectSeries(state: FinancialState): number[] {
 interface CashFlowChartProps {
   current: FinancialState;
   simulated?: FinancialState | null;
-  payrollAmount: number;
 }
 
 export default function CashFlowChart({
   current,
   simulated,
-  payrollAmount,
 }: CashFlowChartProps) {
+  const payrollAmount = current.payrollAmount;
   const beforeSeries = projectSeries(current);
   const afterSeries = simulated ? projectSeries(simulated) : null;
 

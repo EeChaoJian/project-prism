@@ -63,8 +63,8 @@ export default function Home() {
           label="Cash Balance"
           value={rm(state.cashBalance)}
           sublabel="Cash on hand today"
-          afterValue={after ? rm(simulatedState!.cashBalance) : undefined}
-          improved={after ? simulatedState!.cashBalance > state.cashBalance : false}
+          afterValue={simulatedState ? rm(simulatedState.cashBalance) : undefined}
+          improved={simulatedState ? simulatedState.cashBalance > state.cashBalance : false}
         />
         <MetricCard
           label="Runway Days"
@@ -167,11 +167,7 @@ export default function Home() {
 
       {/* Cash projection chart */}
       <section className="mb-10">
-        <CashFlowChart
-          current={state}
-          simulated={simulatedState}
-          payrollAmount={state.payrollAmount}
-        />
+        <CashFlowChart current={state} simulated={simulatedState} />
       </section>
 
       <footer className="border-t border-edge pt-6 text-xs text-slate-500">

@@ -5,6 +5,7 @@ import MetricCard from "@/components/MetricCard";
 import AgentCard from "@/components/AgentCard";
 import DecisionPanel from "@/components/DecisionPanel";
 import DecisionCustomizer from "@/components/DecisionCustomizer";
+import OptionComparison from "@/components/OptionComparison";
 import CashFlowChart from "@/components/CashFlowChart";
 import BoardroomStatus from "@/components/BoardroomStatus";
 import OrchestrationConsole from "@/components/OrchestrationConsole";
@@ -20,6 +21,8 @@ import {
   simulateDecision,
   getDecisionOptions,
   defaultDecisionParameters,
+  compareOptions,
+  recommendedAction,
   type DecisionAction,
   type DecisionParameters,
   type SimulationResult,
@@ -64,6 +67,8 @@ export default function Home() {
 
   const health = checkFinancialHealth(company);
   const options = getDecisionOptions(company, params);
+  const outcomes = compareOptions(company, params);
+  const recommended = recommendedAction(company, params);
 
   function handleProfileSubmit(next: FinancialState) {
     setCompany(next);
@@ -363,10 +368,17 @@ export default function Home() {
             params={params}
             onChange={handleParamsChange}
           />
+          <OptionComparison
+            outcomes={outcomes}
+            recommended={recommended}
+            selected={selected}
+            onSelect={handleDecide}
+          />
           <DecisionPanel
             options={options}
             onDecide={handleDecide}
             selected={selected}
+            recommended={recommended}
           />
         </div>
       </section>

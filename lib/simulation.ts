@@ -188,3 +188,54 @@ export function simulateDecision(
 
   return { action, label, explanation, updatedState, before, after };
 }
+
+// ---- Option comparison (read-only; reuses simulateDecision) --------------
+// A compact per-action outcome for the "Compare all options" table. Pure
+// derivation — it changes no state and adds no new simulation logic.
+
+export interface OptionOutcome {
+  action: DecisionAction;
+  label: string;
+  cashAfter: number;
+  runwayAfter: number;
+  payrollGapAfter: number;
+  protectsPayroll: boolean;
+}
+
+const ALL_ACTIONS: DecisionAction[] = [
+  "prioritize_alpha",
+  "delay_equipment",
+  "early_payment_discount",
+  "do_nothing",
+];
+
+// Run every action through the deterministic engine and summarise the outcome.
+export function compareOptions(
+  state: FinancialState,
+  params: DecisionParameters = defaultDecisionParameters(state)
+): OptionOutcome[] {
+  return ALL_ACTIONS.map((action) => {
+    const r = simulateDecision(state, action, params);
+    return {
+      action,
+      label: r.label,
+      cashAfter: r.updatedState.cashBalance,
+      runwayAfter: r.after.runwayDays,
+      payrollGapAfter: r.after.payrollGap,
+      protectsPayroll: !r.after.payrollRisk,
+    };
+  });
+}
+
+// Deterministic "best" pick: if payroll is already safe, do nothing; otherwise
+// the option that leaves the smallest payroll gap (tie-break: longest runway).
+export function recommendedAction(
+  state: FinancialState,
+  params: DecisionParameters = defaultDecisionParameters(state)
+): DecisionAction {
+  if (!checkFinancialHealth(state).payrollRisk) return "do_nothing";
+  return [...compareOptions(state, params)].sort(
+    (a, b) =>
+      a.payrollGapAfter - b.payrollGapAfter || b.runwayAfter - a.runwayAfter
+  )[0].action;
+}

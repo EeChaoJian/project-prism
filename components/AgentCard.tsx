@@ -100,7 +100,7 @@ export default function AgentCard({ agent }: { agent: AgentResponse }) {
           value={`${pm.adjustedRunwayDays.toFixed(1)}d`}
         />
         <StatTile
-          label="P(Success)"
+          label="Scenario Confidence"
           value={`${(pm.probabilityOfSuccess * 100).toFixed(1)}%`}
         />
         <StatTile

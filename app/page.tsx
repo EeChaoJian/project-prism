@@ -4,31 +4,49 @@ import { useState } from "react";
 import MetricCard from "@/components/MetricCard";
 import AgentCard from "@/components/AgentCard";
 import DecisionPanel from "@/components/DecisionPanel";
+import DecisionCustomizer from "@/components/DecisionCustomizer";
 import CashFlowChart from "@/components/CashFlowChart";
 import BoardroomStatus from "@/components/BoardroomStatus";
 import OrchestrationConsole from "@/components/OrchestrationConsole";
-import { initialFinancialState } from "@/lib/financialState";
+import CompanyOnboardingForm from "@/components/CompanyOnboardingForm";
+import {
+  initialFinancialState,
+  type FinancialState,
+} from "@/lib/financialState";
 import { checkFinancialHealth } from "@/lib/healthCheck";
 import { useBoardroom } from "@/lib/useBoardroom";
 import { BOARDROOM_STEPS, type BoardSource } from "@/lib/boardroom";
 import {
   simulateDecision,
+  getDecisionOptions,
+  defaultDecisionParameters,
   type DecisionAction,
+  type DecisionParameters,
   type SimulationResult,
 } from "@/lib/simulation";
 
 const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
 
 // Shared monochrome tokens.
-const CARD = "bg-white rounded-2xl border border-neutral-200/80 shadow-sm transition-all duration-200";
+const CARD =
+  "bg-white rounded-2xl border border-neutral-200/80 shadow-sm transition-all duration-200";
 const PRIMARY_BUTTON =
   "bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl px-5 py-2.5 transition-colors shadow-sm";
 
+type View = "setup" | "boardroom";
+
 export default function Home() {
-  // The deterministic base state never changes; a simulation produces a
-  // separate result we render alongside it as before/after.
-  const state = initialFinancialState;
-  const health = checkFinancialHealth(state);
+  // ---- Centralized dashboard state ---------------------------------------
+  // The company profile and decision parameters are the single source of
+  // truth: metric cards, agent context, decision options, the chart, and
+  // simulateDecision() all derive from them.
+  const [view, setView] = useState<View>("setup");
+  const [company, setCompany] = useState<FinancialState>(initialFinancialState);
+  const [params, setParams] = useState<DecisionParameters>(() =>
+    defaultDecisionParameters(initialFinancialState)
+  );
+  const [result, setResult] = useState<SimulationResult | null>(null);
+  const [selected, setSelected] = useState<DecisionAction | null>(null);
 
   // The AI boardroom is generated on demand via /api/boardroom.
   const {
@@ -39,53 +57,158 @@ export default function Home() {
     activeStep,
     source,
     convene,
+    reset,
   } = useBoardroom();
 
-  const [result, setResult] = useState<SimulationResult | null>(null);
-  const [selected, setSelected] = useState<DecisionAction | null>(null);
+  const health = checkFinancialHealth(company);
+  const options = getDecisionOptions(company, params);
+
+  function handleProfileSubmit(next: FinancialState) {
+    setCompany(next);
+    setParams(defaultDecisionParameters(next));
+    setResult(null);
+    setSelected(null);
+    reset(); // never show a stale board against fresh financial data
+    setView("boardroom");
+  }
 
   function handleDecide(action: DecisionAction) {
     setSelected(action);
-    setResult(simulateDecision(state, action));
+    setResult(simulateDecision(company, action, params));
+  }
+
+  function handleParamsChange(next: DecisionParameters) {
+    setParams(next);
+    // Re-run the active simulation live so the result panel tracks the inputs.
+    if (selected) setResult(simulateDecision(company, selected, next));
   }
 
   const after = result?.after ?? null;
   const simulatedState = result?.updatedState ?? null;
 
+  // ---- Setup view ---------------------------------------------------------
+  if (view === "setup") {
+    return (
+      <main className="mx-auto max-w-4xl px-6 py-12">
+        <header className="mb-8">
+          <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
+            <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
+            Executive Treasury Console
+          </div>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
+            Project Prism — Cash-Flow Stress-Testing Engine
+          </h1>
+          <p className="mt-3 max-w-2xl font-normal text-neutral-500">
+            Configure your company profile below, then convene an AI boardroom
+            to stress-test mitigation pathways against deterministic treasury
+            logic.
+          </p>
+        </header>
+
+        <CompanyOnboardingForm initial={company} onSubmit={handleProfileSubmit} />
+      </main>
+    );
+  }
+
+  // ---- Boardroom view -----------------------------------------------------
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
-      {/* Header */}
-      <header className="mb-12">
+      {/* Executive hero */}
+      <header className="mb-8">
         <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
           <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
-          Project Prism
+          Executive Treasury Console
         </div>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
-          Explore financial decisions before you make them.
+          Project Prism — Cash-Flow Stress-Testing Engine
         </h1>
         <p className="mt-3 max-w-2xl font-normal text-neutral-500">
-          An AI-powered scenario simulator for SME owners. See a cash crunch
-          early, weigh the trade-offs, and simulate the outcome — all backed by
-          deterministic financial logic.
+          Detect the crunch early, convene an AI boardroom, and stress-test each
+          mitigation pathway against deterministic treasury logic.
         </p>
-        <div className="mt-4 text-sm text-neutral-500">
-          Viewing:{" "}
-          <span className="font-medium text-neutral-900">
-            {state.companyName}
-          </span>{" "}
-          · Small B2B supplier for cafes and restaurants
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
+          <span>
+            Profile:{" "}
+            <span className="font-medium text-neutral-900">
+              {company.companyName}
+            </span>
+          </span>
+          <button
+            onClick={() => setView("setup")}
+            className="rounded-lg border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:border-neutral-300"
+          >
+            Edit Company Profile
+          </button>
         </div>
       </header>
+
+      {/* Executive Crisis Command — computed directly from checkFinancialHealth */}
+      {health.payrollRisk ? (
+        <section className="mb-12 rounded-2xl bg-neutral-900 p-6 text-white shadow-md sm:p-7">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/70">
+                <span aria-hidden>🚨</span> Emergency Board Meeting Required
+              </div>
+              <p className="mt-2 text-lg font-semibold tracking-tight sm:text-xl">
+                Payroll risk detected in {company.payrollDueInDays} days.
+              </p>
+              <p className="mt-2 text-sm text-neutral-300">
+                The Board of Directors is standing by. Convene the boardroom
+                immediately to stress-test corporate mitigation pathways.
+              </p>
+            </div>
+            <button
+              onClick={() => convene(company)}
+              disabled={boardStatus === "running"}
+              className="shrink-0 rounded-xl bg-white px-5 py-2.5 font-medium text-neutral-900 shadow-sm transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {boardStatus === "idle"
+                ? "Convene Boardroom"
+                : boardStatus === "running"
+                  ? "Convening…"
+                  : "Re-convene Boardroom"}
+            </button>
+          </div>
+        </section>
+      ) : (
+        <section className={`mb-12 p-6 sm:p-7 ${CARD}`}>
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+                Treasury Position Stable
+              </div>
+              <p className="mt-2 text-lg font-semibold tracking-tight text-neutral-900 sm:text-xl">
+                No payroll risk detected for {company.companyName}.
+              </p>
+              <p className="mt-2 text-sm text-neutral-500">{health.alertMessage}</p>
+            </div>
+            <button
+              onClick={() => convene(company)}
+              disabled={boardStatus === "running"}
+              className={`shrink-0 ${PRIMARY_BUTTON} disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {boardStatus === "idle"
+                ? "Convene Boardroom"
+                : boardStatus === "running"
+                  ? "Convening…"
+                  : "Re-convene Boardroom"}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Dashboard metrics */}
       <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Cash Balance"
-          value={rm(state.cashBalance)}
+          value={rm(company.cashBalance)}
           sublabel="Cash on hand today"
           afterValue={simulatedState ? rm(simulatedState.cashBalance) : undefined}
           improved={
-            simulatedState ? simulatedState.cashBalance > state.cashBalance : false
+            simulatedState
+              ? simulatedState.cashBalance > company.cashBalance
+              : false
           }
         />
         <MetricCard
@@ -98,30 +221,19 @@ export default function Home() {
         <MetricCard
           label="Expected Collections"
           value={rm(health.expectedCollections)}
-          sublabel={`${state.invoices.length} outstanding invoices`}
+          sublabel={`${company.invoices.length} outstanding invoices`}
           afterValue={after ? rm(after.expectedCollections) : undefined}
         />
         <MetricCard
           label="Payroll Risk"
           value={health.payrollRisk ? "At Risk" : "Covered"}
           sublabel={`Gap: ${rm(health.payrollGap)}`}
-          afterValue={after ? (after.payrollRisk ? "At Risk" : "Covered") : undefined}
+          afterValue={
+            after ? (after.payrollRisk ? "At Risk" : "Covered") : undefined
+          }
           improved={after ? !after.payrollRisk && health.payrollRisk : false}
         />
       </section>
-
-      {/* Payroll risk alert — clean, minimal warning block */}
-      {health.payrollRisk && (
-        <section className="mb-12 rounded-2xl bg-neutral-900 p-6 text-white shadow-md">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">⚠</span>
-            <span className="font-semibold tracking-tight">
-              Emergency Board Meeting Required
-            </span>
-          </div>
-          <p className="mt-2 text-sm text-neutral-300">{health.alertMessage}</p>
-        </section>
-      )}
 
       {/* Agent boardroom */}
       <section className="mb-12">
@@ -136,27 +248,29 @@ export default function Home() {
               Collections Manager reads the CFO&apos;s stance and responds.
             </p>
           </div>
-          <button
-            onClick={() => convene(state)}
-            disabled={boardStatus === "running"}
-            className={`shrink-0 ${PRIMARY_BUTTON} disabled:cursor-not-allowed disabled:opacity-50`}
-          >
-            {boardStatus === "idle"
-              ? "Convene the Boardroom"
-              : boardStatus === "running"
+          {/* The primary Convene CTA lives in the crisis command above; here we
+              only surface the in-context control once a run has started. */}
+          {boardStatus !== "idle" && (
+            <button
+              onClick={() => convene(company)}
+              disabled={boardStatus === "running"}
+              className={`shrink-0 ${PRIMARY_BUTTON} disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {boardStatus === "running"
                 ? "Convening…"
-                : "Re-convene the Boardroom"}
-          </button>
+                : "Re-convene Boardroom"}
+            </button>
+          )}
         </div>
 
         {boardStatus === "idle" && (
           <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500">
             Click{" "}
             <span className="font-medium text-neutral-900">
-              Convene the Boardroom
+              Convene Boardroom
             </span>{" "}
-            to generate the CFO and Collections Manager analysis for the current
-            financial state.
+            to generate the CFO and Collections Manager analysis for{" "}
+            {company.companyName}&apos;s current financial state.
           </div>
         )}
 
@@ -200,11 +314,22 @@ export default function Home() {
             Your Decision
           </h2>
           <p className="text-sm text-neutral-500">
-            Choose a strategy. The simulation engine updates the numbers
-            immediately — the AI never invents the outcome.
+            Tune the parameters, then choose a strategy. The simulation engine
+            updates the numbers immediately — the AI never invents the outcome.
           </p>
         </div>
-        <DecisionPanel onDecide={handleDecide} selected={selected} />
+        <div className="space-y-4">
+          <DecisionCustomizer
+            state={company}
+            params={params}
+            onChange={handleParamsChange}
+          />
+          <DecisionPanel
+            options={options}
+            onDecide={handleDecide}
+            selected={selected}
+          />
+        </div>
       </section>
 
       {/* Simulation result */}
@@ -223,9 +348,9 @@ export default function Home() {
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <ComparisonRow
               label="Cash Balance"
-              before={rm(state.cashBalance)}
+              before={rm(company.cashBalance)}
               after={rm(result.updatedState.cashBalance)}
-              improved={result.updatedState.cashBalance > state.cashBalance}
+              improved={result.updatedState.cashBalance > company.cashBalance}
             />
             <ComparisonRow
               label="Runway"
@@ -245,12 +370,12 @@ export default function Home() {
 
       {/* Cash projection chart */}
       <section className="mb-12">
-        <CashFlowChart current={state} simulated={simulatedState} />
+        <CashFlowChart current={company} simulated={simulatedState} />
       </section>
 
       <footer className="border-t border-neutral-200 pt-6 text-xs text-neutral-400">
-        Project Prism · Deterministic MVP · Numbers come from simulation logic,
-        not AI.
+        Project Prism · AI Boardroom MVP · Numbers from simulation, reasoning
+        from AI.
       </footer>
     </main>
   );

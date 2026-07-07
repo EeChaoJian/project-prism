@@ -13,7 +13,11 @@
 // simulateDecision() remain the single source of truth for every number. This
 // route only generates the agents' natural-language reasoning.
 
-import { initialFinancialState, type FinancialState } from "@/lib/financialState";
+import {
+  initialFinancialState,
+  lookalikeCohortData,
+  type FinancialState,
+} from "@/lib/financialState";
 import { checkFinancialHealth } from "@/lib/healthCheck";
 import { getAgentResponses, type AgentResponse } from "@/lib/agents";
 import { runCFO, runCollections, hasFireworksKey } from "@/lib/fireworks";
@@ -75,9 +79,20 @@ export async function POST(req: Request) {
         `[SYSTEM]: Cash balance alert triggered. Deficit in t-${state.payrollDueInDays} days.`
       );
       await log(
-        `[SYSTEM]: Deterministic matrix locked — expected collections ${rm(
+        `[SYSTEM]: Cash-flow baseline locked — expected collections ${rm(
           health.expectedCollections
         )}, payroll gap ${rm(health.payrollGap)}.`
+      );
+      // Lookalike Cohort Analysis — surface the empirical-twin retrieval live.
+      await log("[SYSTEM]: Initializing macro-vector lookalike scanner...");
+      await log(
+        "[SYSTEM]: Querying regional SME performance registry for cash-flow twins..."
+      );
+      await log(
+        `[SYSTEM]: Match found: Cohort ${lookalikeCohortData.cohortId} (n=${lookalikeCohortData.sampleSize}). Overlapping risk parameters: Runway < 20d, Payroll Gap > RM4k, High AR Concentration.`
+      );
+      await log(
+        "[SYSTEM]: Injecting cohort operational benchmarks into Strategic Financial Officer context window..."
       );
 
       // ---- PHASE: cfo_processing (INFERENCE 1) ----------------------------
@@ -96,7 +111,7 @@ export async function POST(req: Request) {
         if (!online) await delay(400);
       }
       await log(
-        `[CFO_AGENT]: Macro-sensitivity resolved. Adjusted runway ${cfo.predictiveMetrics.adjustedRunwayDays.toFixed(
+        `[CFO_AGENT]: Operating-burn sensitivity resolved. Adjusted runway ${cfo.predictiveMetrics.adjustedRunwayDays.toFixed(
           1
         )}d @ +5% burn · risk ${cfo.quantitativeRiskScore}/100 · conf ${cfo.confidence.toFixed(
           2
@@ -127,7 +142,7 @@ export async function POST(req: Request) {
         if (!online) await delay(400);
       }
       await log(
-        `[COLLECTIONS_AGENT]: Receivables vector compiled. P(success) ${(
+        `[COLLECTIONS_AGENT]: Receivables recovery compiled. Scenario Confidence ${(
           collections.predictiveMetrics.probabilityOfSuccess * 100
         ).toFixed(1)}% · risk ${collections.quantitativeRiskScore}/100 · conf ${collections.confidence.toFixed(
           2

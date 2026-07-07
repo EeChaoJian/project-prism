@@ -141,7 +141,15 @@ export function useBoardroom() {
     }
   }, []);
 
+  // Clear the boardroom entirely — used when the company profile changes so a
+  // stale board can never be shown against fresh financial data.
+  const reset = useCallback(() => {
+    runIdRef.current += 1; // invalidate any in-flight run
+    controllerRef.current?.abort();
+    setState(IDLE_STATE);
+  }, []);
+
   const activeStep = phaseToActiveStep(state.phase);
 
-  return { ...state, activeStep, convene };
+  return { ...state, activeStep, convene, reset };
 }

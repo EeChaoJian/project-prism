@@ -6,7 +6,7 @@
 // number is derived from the deterministic health check, so the fallback stays
 // internally consistent with the dashboard.
 
-import type { FinancialState } from "./financialState";
+import type { FinancialState, Invoice } from "./financialState";
 import { checkFinancialHealth } from "./healthCheck";
 
 export interface AgentPredictiveMetrics {
@@ -35,7 +35,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
   const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
   const dailyBurn = state.monthlyOpex / 30;
 
-  // ---- CFO — macro-economic sensitivity on runway ----------------------
+  // ---- CFO — operating burn sensitivity on runway ----------------------
   const runwayHigh = round1(state.cashBalance / (dailyBurn * 0.95)); // −5% burn
   const runwayLow = round1(state.cashBalance / (dailyBurn * 1.05)); // +5% burn
   const cfoProbability = clamp01(
@@ -45,24 +45,20 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
 
   const cfo: AgentResponse = {
     agent: "CFO",
-    role: "Elite quantitative VC analyst — liquidity, runway, and payroll stability.",
-    headline: "Preserve liquidity before the cash-zero point",
-    position: `The business is exposed to payroll risk in ${state.payrollDueInDays} days, with a payroll gap of ${rm(
-      health.payrollGap
-    )}.`,
-    recommendedAction: "Delay the equipment purchase to extend runway.",
+    role: "Strategic Financial Officer — corporate liquidity, runway constraints, and operating burn sensitivity.",
+    headline: "Delay equipment. Payroll comes first.",
+    position: `Payroll lands in ${state.payrollDueInDays} days and baseline cash will not cover it. Cutting a scheduled outflow is the only deterministic way to secure it.`,
+    recommendedAction: "Delay Equipment Purchase.",
     reasoning: [
-      `Cash balance is ${rm(state.cashBalance)} against a ${rm(
+      `Cash is ${rm(state.cashBalance)}; payroll is ${rm(
         state.payrollAmount
-      )} payroll obligation.`,
-      `Daily operating burn is ${rm(dailyBurn)}, a baseline runway of ${round1(
-        health.runwayDays
-      )} days.`,
-      `Preserving ${rm(
+      )}. The shortfall is real, not theoretical.`,
+      `Releasing the earmarked ${rm(
         state.equipmentPurchase
-      )} of liquidity directly defers the cash-zero point.`,
+      )} equipment payment puts that liquidity straight back into reserves.`,
+      `Banking on overdue balances from high relationship-risk accounts to close the gap is irresponsible treasury management.`,
     ],
-    statisticalVariance: `Macro-economic sensitivity: a ±5% operating-burn swing moves the cash-zero runway between ${runwayLow} and ${runwayHigh} days.`,
+    statisticalVariance: `Operating burn sensitivity: a ±5% operating-burn swing moves the cash-zero runway between ${runwayLow} and ${runwayHigh} days.`,
     predictiveMetrics: {
       adjustedRunwayDays: runwayLow, // stressed (+5% burn) runway
       probabilityOfSuccess: cfoProbability,
@@ -71,38 +67,47 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
     confidence: 0.82,
   };
 
-  // ---- Collections — probability-weighted receivables vector -----------
+  // ---- Collections — receivables recovery assumptions ------------------
+  // Target the largest outstanding receivable in whatever state was supplied,
+  // so custom company profiles get coherent fallback narratives too.
   const totalReceivables = state.invoices.reduce((sum, i) => sum + i.amount, 0);
-  const alpha = state.invoices.find((i) => i.client === "Client Alpha");
-  const alphaExpected = alpha ? alpha.amount * alpha.collectionProbability : 0;
+  const target = state.invoices.reduce<Invoice | undefined>(
+    (top, inv) => (!top || inv.amount > top.amount ? inv : top),
+    undefined
+  );
+  const targetName = target?.client ?? "the top receivable";
+  const targetPct = Math.round((target?.collectionProbability ?? 0) * 100);
+  const targetExpected = target
+    ? target.amount * target.collectionProbability
+    : 0;
   const collProbability = clamp01(
     totalReceivables > 0 ? health.expectedCollections / totalReceivables : 0
   );
-  const collAdjRunway = round1((state.cashBalance + alphaExpected) / dailyBurn);
+  const collAdjRunway = round1(
+    (state.cashBalance + targetExpected) / dailyBurn
+  );
   const collRiskScore = Math.round((1 - collProbability) * 100);
 
   const collections: AgentResponse = {
     agent: "Collections Manager",
-    role: "Expert risk operations analyst — receivables recovery and cash inflow.",
-    headline: "Recover the highest-probability receivable",
-    position: `Acknowledging the CFO's liquidity constraint, the probability-weighted receivables vector totals ${rm(
-      health.expectedCollections
-    )} across ${state.invoices.length} invoices.`,
-    recommendedAction: "Prioritise collecting from Client Alpha.",
+    role: "Risk Operations Manager — receivables recovery assumptions and collection aging models.",
+    headline: `Chase ${targetName}. Don't freeze growth.`,
+    position: `The CFO's freeze protects cash but stalls operations for a full month. We solve this by collecting, not cutting.`,
+    recommendedAction: `Prioritize ${targetName}.`,
     reasoning: [
-      `Client Alpha owes ${rm(
-        alpha?.amount ?? 0
-      )} at an 80% settlement probability — the strongest vector.`,
-      `Under a standard B2B default matrix, Alpha contributes ${rm(
-        alphaExpected
-      )} of expected recovery.`,
-      `Recovering Alpha lifts adjusted runway to ${collAdjRunway} days, easing the cash-zero pressure.`,
+      `${targetName} carries ${targetPct}% scenario confidence on its ${rm(
+        target?.amount ?? 0
+      )} outstanding balance — a reliable near-term influx.`,
+      `Under a standard age-of-receivables aging model, that recovery lands fast enough to cover payroll.`,
+      `Freezing the ${rm(
+        state.equipmentPurchase
+      )} equipment spend chokes the operational momentum this business needs to grow.`,
     ],
-    statisticalVariance: `Probability-weighted receivables vector: ${rm(
+    statisticalVariance: `Receivables recovery assumptions: ${rm(
       health.expectedCollections
     )} expected of ${rm(
       totalReceivables
-    )} outstanding; Client Alpha settlement modelled at 80% ± 10%.`,
+    )} outstanding; ${targetName} modelled at ${targetPct}% settlement.`,
     predictiveMetrics: {
       adjustedRunwayDays: collAdjRunway,
       probabilityOfSuccess: collProbability,

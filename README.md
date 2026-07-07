@@ -1,6 +1,6 @@
 # Project Prism
 
-**AI Boardroom for SME cash-flow decisions.**
+**AI Boardroom for SME financial decisions.**
 
 Project Prism turns a payroll crisis into a boardroom decision: two AI agents
 argue the trade-off, then a deterministic simulation shows what the owner's
@@ -35,6 +35,9 @@ The CFO argues for preserving cash. The Collections Manager disagrees and
 pushes receivables recovery. The owner chooses a response, and the simulation
 updates the numbers instantly.
 
+Accounting software tells you what happened. Project Prism lets you rehearse a
+decision before it happens.
+
 ## Why AI
 
 The AI does not calculate the outcome. It explains the trade-off.
@@ -42,7 +45,16 @@ The AI does not calculate the outcome. It explains the trade-off.
 The deterministic engine owns the math:
 
 ```
-AI reasoning → Simulation engine → Updated cash
+Financial inputs
+        │
+        ▼
+Deterministic simulation
+        │
+        ▼
+Updated metrics
+        ▲
+        │
+AI boardroom reasoning
 ```
 
 That split is the product's credibility: useful boardroom reasoning without

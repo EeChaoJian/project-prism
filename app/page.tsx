@@ -131,7 +131,7 @@ export default function Home() {
           been called.
         </h1>
         <p className="mt-3 max-w-2xl font-normal text-neutral-500">
-          Project Prism stress-tests the choices in front of the owner. The
+          Project Prism is an AI boardroom for SME financial decisions. The
           numbers come from the simulation; the agents explain the trade-offs.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
@@ -209,6 +209,16 @@ export default function Home() {
       {/* Dashboard metrics */}
       <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
+          label="Payroll Risk"
+          value={health.payrollRisk ? "At Risk" : "Covered"}
+          sublabel={`Gap: ${rm(health.payrollGap)}`}
+          afterValue={
+            after ? (after.payrollRisk ? "At Risk" : "Covered") : undefined
+          }
+          improved={after ? !after.payrollRisk && health.payrollRisk : false}
+          featured={health.payrollRisk}
+        />
+        <MetricCard
           label="Cash Balance"
           value={rm(company.cashBalance)}
           sublabel="Cash on hand today"
@@ -231,15 +241,6 @@ export default function Home() {
           value={rm(health.expectedCollections)}
           sublabel={`${company.invoices.length} outstanding invoices`}
           afterValue={after ? rm(after.expectedCollections) : undefined}
-        />
-        <MetricCard
-          label="Payroll Risk"
-          value={health.payrollRisk ? "At Risk" : "Covered"}
-          sublabel={`Gap: ${rm(health.payrollGap)}`}
-          afterValue={
-            after ? (after.payrollRisk ? "At Risk" : "Covered") : undefined
-          }
-          improved={after ? !after.payrollRisk && health.payrollRisk : false}
         />
       </section>
 
@@ -324,7 +325,7 @@ export default function Home() {
             {/* Handoff to the owner. */}
             {boardStatus === "done" && board.length > 1 && (
               <p className="pt-1 text-center text-sm font-medium text-neutral-900">
-                The board has weighed in. The decision is yours.
+                The board has weighed in. The final decision is yours.
               </p>
             )}
           </div>
@@ -430,7 +431,7 @@ function boardOutcome(companyCash: number, result: SimulationResult): string {
     return "No action taken — payroll risk remains and the board is still exposed.";
   }
   if (!result.after.payrollRisk && result.before.payrollRisk) {
-    return `Payroll secured. Runway extended to ${Math.round(
+    return `Board recommendation implemented. Payroll secured. Runway extended to ${Math.round(
       result.after.runwayDays
     )} days.`;
   }

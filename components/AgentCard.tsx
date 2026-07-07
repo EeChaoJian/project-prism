@@ -4,7 +4,12 @@
 import type { AgentResponse } from "@/lib/agents";
 
 export default function AgentCard({ agent }: { agent: AgentResponse }) {
-  const scenarioConfidence = Math.round(agent.scenarioConfidence * 100);
+  const confidenceLabel =
+    agent.scenarioConfidence >= 0.8
+      ? "High confidence"
+      : agent.scenarioConfidence >= 0.55
+        ? "Medium confidence"
+        : "Low confidence";
 
   return (
     <div className="flex flex-col rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
@@ -52,11 +57,11 @@ export default function AgentCard({ agent }: { agent: AgentResponse }) {
           <div className="text-xs uppercase tracking-wider text-neutral-500">
             Confidence this protects payroll
           </div>
-          <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-neutral-900">
-            {scenarioConfidence}%
+          <div className="mt-1 text-lg font-semibold tracking-tight text-neutral-900">
+            {confidenceLabel}
           </div>
           <div className="mt-0.5 text-[11px] text-neutral-400">
-            Based on this scenario
+            Based on current assumptions
           </div>
         </div>
       </div>

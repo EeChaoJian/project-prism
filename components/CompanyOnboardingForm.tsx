@@ -175,8 +175,9 @@ export default function CompanyOnboardingForm({
             Welcome to Project Prism
           </h2>
           <p className="mt-1 max-w-xl text-sm text-neutral-500">
-            Tell us about your business, or load the sample payroll-crisis
-            scenario. Every boardroom number is computed from these inputs.
+            Before we convene the board, tell us about your business or load
+            the sample payroll-crisis scenario. Every boardroom number is
+            computed from today&apos;s situation.
           </p>
         </div>
         <div className="flex shrink-0 gap-2">

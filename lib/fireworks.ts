@@ -3,8 +3,8 @@
 // This module is server-only (it reads FIREWORKS_API_KEY and calls the
 // Fireworks inference API). It runs two SEQUENTIAL inferences:
 //   1. The CFO models payroll liquidity and operating-burn sensitivity.
-//   2. The Collections Manager reads the CFO's literal output and counters
-//      with receivables recovery assumptions.
+//   2. The Collections Manager reviews the CFO's recommendation and presents
+//      a receivables recovery counterproposal.
 //
 // Every function here THROWS on any failure (missing key, HTTP error, bad
 // JSON, missing fields). The API route catches those and falls back to the
@@ -172,7 +172,7 @@ async function fireworksChat(messages: ChatMessage[]): Promise<string> {
       model: FIREWORKS_MODEL,
       messages,
       temperature: 0.4,
-      max_tokens: 900,
+      max_tokens: 500,
       response_format: { type: "json_object" },
     }),
     // Guard against a hung request stalling the whole boardroom.
@@ -263,8 +263,8 @@ export async function runCFO(
   );
 }
 
-// INFERENCE 2 — the Collections Manager reads the CFO's literal output and
-// counters with receivables recovery assumptions in response.
+// INFERENCE 2 — the Collections Manager reviews the CFO recommendation and
+// presents a receivables recovery counterproposal.
 export async function runCollections(
   state: FinancialState,
   health: FinancialHealth,

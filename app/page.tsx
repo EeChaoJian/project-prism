@@ -349,6 +349,10 @@ export default function Home() {
             Equipment purchase scheduled next week ({rm(company.equipmentPurchase)})
             · Payroll due in {company.payrollDueInDays} days · Operating expenses
             accrue daily.
+            <div className="mt-2 border-t border-neutral-200 pt-2 text-[11px] text-neutral-500">
+              Financial inputs → deterministic simulation → updated metrics;
+              AI boardroom reasoning explains the trade-off.
+            </div>
           </div>
         </div>
         <div className="space-y-4">
@@ -384,6 +388,12 @@ export default function Home() {
 
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <ComparisonRow
+              label="Payroll Status"
+              before={result.before.payrollRisk ? "Exposed" : "Protected"}
+              after={result.after.payrollRisk ? "Exposed" : "Protected"}
+              improved={!result.after.payrollRisk && result.before.payrollRisk}
+            />
+            <ComparisonRow
               label="Cash Balance"
               before={rm(company.cashBalance)}
               after={rm(result.updatedState.cashBalance)}
@@ -395,17 +405,17 @@ export default function Home() {
               after={days(result.after.runwayDays)}
               improved={result.after.runwayDays > result.before.runwayDays}
             />
-            <ComparisonRow
-              label="Payroll Risk"
-              before={result.before.payrollRisk ? "At Risk" : "Covered"}
-              after={result.after.payrollRisk ? "At Risk" : "Covered"}
-              improved={!result.after.payrollRisk && result.before.payrollRisk}
-            />
           </div>
 
           {/* Resolution beat — the outcome, stated from the real deltas. */}
           <div className="mt-6 rounded-xl bg-neutral-900 p-4 text-sm font-medium text-white">
-            {boardOutcome(company.cashBalance, result)}
+            <div className="text-xs uppercase tracking-widest text-white/50">
+              Board Decision Implemented
+            </div>
+            <div className="mt-1">{boardOutcome(company.cashBalance, result)}</div>
+            <div className="mt-3 text-xs font-semibold text-white/70">
+              Next Review →
+            </div>
           </div>
         </section>
       )}
@@ -431,9 +441,7 @@ function boardOutcome(companyCash: number, result: SimulationResult): string {
     return "No action taken — payroll risk remains and the board is still exposed.";
   }
   if (!result.after.payrollRisk && result.before.payrollRisk) {
-    return `Board recommendation implemented. Payroll secured. Runway extended to ${Math.round(
-      result.after.runwayDays
-    )} days.`;
+    return `Payroll protected. Runway +${runwayUp} days.`;
   }
   return `Cash up RM${Math.round(
     cashUp

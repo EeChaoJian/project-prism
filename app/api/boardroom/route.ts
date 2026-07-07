@@ -83,16 +83,15 @@ export async function POST(req: Request) {
           health.expectedCollections
         )}, payroll gap ${rm(health.payrollGap)}.`
       );
-      // Lookalike Cohort Analysis — surface the empirical-twin retrieval live.
-      await log("[SYSTEM]: Initializing macro-vector lookalike scanner...");
+      // Lookalike cohort — synthetic demo benchmark data (not a live registry).
       await log(
-        "[SYSTEM]: Querying regional SME performance registry for cash-flow twins..."
+        "[SYSTEM]: Loading synthetic demo benchmark cohort (illustrative peer set)..."
       );
       await log(
-        `[SYSTEM]: Match found: Cohort ${lookalikeCohortData.cohortId} (n=${lookalikeCohortData.sampleSize}). Overlapping risk parameters: Runway < 20d, Payroll Gap > RM4k, High AR Concentration.`
+        `[SYSTEM]: Benchmark cohort ${lookalikeCohortData.cohortId} (n=${lookalikeCohortData.sampleSize}, synthetic demo data). Matching parameters: Runway < 20d, Payroll Gap > RM4k, High AR Concentration.`
       );
       await log(
-        "[SYSTEM]: Injecting cohort operational benchmarks into Strategic Financial Officer context window..."
+        "[SYSTEM]: Injecting benchmark cohort assumptions into the CFO context..."
       );
 
       // ---- PHASE: cfo_processing (INFERENCE 1) ----------------------------
@@ -143,7 +142,7 @@ export async function POST(req: Request) {
       }
       await log(
         `[COLLECTIONS_AGENT]: Receivables recovery compiled. Scenario Confidence ${(
-          collections.predictiveMetrics.probabilityOfSuccess * 100
+          collections.predictiveMetrics.scenarioConfidence * 100
         ).toFixed(1)}% · risk ${collections.quantitativeRiskScore}/100 · conf ${collections.confidence.toFixed(
           2
         )}.`

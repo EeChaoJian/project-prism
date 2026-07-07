@@ -86,13 +86,13 @@ const cohort = lookalikeCohortData;
 const pctOf = (n: number) => `${Math.round(n * 100)}%`;
 
 const cohortCfoNote = (state: FinancialState) =>
-  `Anchor your trade-off analysis on the matched lookalike cohort ${cohort.cohortId} (n=${cohort.sampleSize}, ${cohort.industry}). In this matched cohort of ${cohort.sampleSize} peers, delaying capital expenditure to preserve ${rm(
+  `Reference a synthetic demo benchmark cohort ${cohort.cohortId} (n=${cohort.sampleSize}, ${cohort.industry}; illustrative demo data, not real registry data). In this benchmark set, delaying capital expenditure to preserve ${rm(
     state.equipmentPurchase
   )} protected near-term payroll compliance in ${pctOf(
     cohort.historicalOutcomes.delayEquipmentSuccessRate
-  )} of cases, preventing an average default rate of ${pctOf(
+  )} of cases, with an average default rate of ${pctOf(
     cohort.historicalOutcomes.defaultRateIfNoAction
-  )}. Cite this empirical precedent explicitly in your reasoning.`;
+  )} when no action was taken. Reference it as an illustrative benchmark, not hard fact.`;
 
 // The receivable the Collections Manager is instructed to champion — the
 // largest outstanding invoice in whatever state was supplied.
@@ -102,7 +102,7 @@ function primaryReceivable(state: FinancialState) {
   >((top, inv) => (!top || inv.amount > top.amount ? inv : top), undefined);
 }
 
-const COHORT_COLLECTIONS = `Reference the matched lookalike cohort ${cohort.cohortId} (n=${cohort.sampleSize}): historical precedents demonstrate that early-settlement discounting accelerates invoice realization by an average of ${cohort.historicalOutcomes.discountInflowAccelerationDays} days. Ground your counter-strategy in this precedent.`;
+const COHORT_COLLECTIONS = `Reference the synthetic demo benchmark cohort ${cohort.cohortId} (n=${cohort.sampleSize}; illustrative demo data, not real registry data): in this benchmark set, early-settlement discounting accelerated invoice realization by an average of ${cohort.historicalOutcomes.discountInflowAccelerationDays} days. Reference it as an illustrative benchmark, not hard fact.`;
 
 // Every agent must return exactly this expanded analytical schema.
 const SCHEMA_INSTRUCTION = `Respond with a SINGLE valid JSON object and nothing else. Use exactly this schema:
@@ -113,7 +113,7 @@ const SCHEMA_INSTRUCTION = `Respond with a SINGLE valid JSON object and nothing 
   "recommendedAction": "string",
   "reasoning": ["string", "string", "string"],
   "statisticalVariance": "string",
-  "predictiveMetrics": { "adjustedRunwayDays": number, "probabilityOfSuccess": number },
+  "predictiveMetrics": { "adjustedRunwayDays": number, "scenarioConfidence": number },
   "quantitativeRiskScore": number,
   "confidence": number
 }
@@ -121,7 +121,7 @@ Rules:
 - "reasoning" must be an array of exactly three short strings.
 - "statisticalVariance" is one sentence quantifying the variance/sensitivity you modelled.
 - "predictiveMetrics.adjustedRunwayDays" is a number of days (one decimal place).
-- "predictiveMetrics.probabilityOfSuccess" is a number between 0 and 1.
+- "predictiveMetrics.scenarioConfidence" is a number between 0 and 1.
 - "quantitativeRiskScore" is an integer between 0 and 100 (higher = more risk).
 - "confidence" is a number between 0 and 1.
 - Only reference the financial figures provided. Compute every derived metric from them; never invent raw numbers.`;
@@ -129,7 +129,7 @@ Rules:
 const cfoSystem = (state: FinancialState) =>
   `You are the Strategic Financial Officer of a small business, speaking in a live financial boardroom. Adopt a highly conservative, risk-averse institutional posture: your mandate is absolute capital preservation.
 Your recommendation is to "Delay Equipment Purchase". Argue that cutting a scheduled cash outflow is the only deterministic way to secure payroll, and that relying on uncollected balances from accounts with high relationship risk is irresponsible.
-Perform an operating burn sensitivity analysis: calculate how a ±5% variance in operating burn changes the exact number of days of runway left before the cash-zero point. Put the stressed (+5% burn) figure in predictiveMetrics.adjustedRunwayDays, the ±5% runway band in statisticalVariance, and the likelihood of covering payroll before cash-zero in probabilityOfSuccess.
+Perform an operating burn sensitivity analysis: calculate how a ±5% variance in operating burn changes the exact number of days of runway left before the cash-zero point. Put the stressed (+5% burn) figure in predictiveMetrics.adjustedRunwayDays, the ±5% runway band in statisticalVariance, and the likelihood of covering payroll before cash-zero in scenarioConfidence.
 ${cohortCfoNote(state)}
 Write in short, natural, hard-hitting executive sentences fit for an immediate 3-minute board overview.
 ${SCHEMA_INSTRUCTION}
@@ -142,7 +142,7 @@ const collectionsSystem = (state: FinancialState) => {
   const targetAmount = rm(target?.amount ?? 0);
   return `You are the Risk Operations Manager of a small business, speaking in a live financial boardroom immediately after the CFO. Actively push back on the CFO's conservative posture.
 Your recommendation is to "Prioritize ${targetName}". Argue that freezing the equipment purchase chokes operational expansion for a full month. Counter using receivables recovery assumptions: ${targetName} carries an ${targetPct}% scenario confidence on their ${targetAmount} outstanding balance, a reliable influx that solves the crisis without freezing internal progress.
-You have just received the CFO's structured output. Acknowledge their liquidity stance in your "position", then make your counter-case. Assess the overdue invoices under a standard age-of-receivables aging model. Put the recovered-cash runway in predictiveMetrics.adjustedRunwayDays, the weighted collection likelihood in predictiveMetrics.probabilityOfSuccess, and the receivables variance in statisticalVariance.
+You have just received the CFO's structured output. Acknowledge their liquidity stance in your "position", then make your counter-case. Assess the overdue invoices under a standard age-of-receivables aging model. Put the recovered-cash runway in predictiveMetrics.adjustedRunwayDays, the weighted collection likelihood in predictiveMetrics.scenarioConfidence, and the receivables variance in statisticalVariance.
 ${COHORT_COLLECTIONS}
 Write in short, natural, hard-hitting executive sentences fit for an immediate 3-minute board overview.
 ${SCHEMA_INSTRUCTION}
@@ -203,7 +203,12 @@ function normalizeAgent(
       ? (obj.predictiveMetrics as Record<string, unknown>)
       : {};
   const adjustedRunwayDays = Number(pm.adjustedRunwayDays);
-  const probabilityOfSuccess = Number(pm.probabilityOfSuccess);
+  // Accept the new field name, tolerating the legacy one if a model emits it.
+  const scenarioConfidence = Number(
+    pm.scenarioConfidence !== undefined
+      ? pm.scenarioConfidence
+      : pm.probabilityOfSuccess
+  );
   const quantitativeRiskScore = Number(obj.quantitativeRiskScore);
   const statisticalVariance =
     typeof obj.statisticalVariance === "string"
@@ -218,7 +223,7 @@ function normalizeAgent(
     reasoning.length === 0 ||
     statisticalVariance === "" ||
     !Number.isFinite(adjustedRunwayDays) ||
-    !Number.isFinite(probabilityOfSuccess) ||
+    !Number.isFinite(scenarioConfidence) ||
     !Number.isFinite(quantitativeRiskScore)
   ) {
     throw new Error("Agent JSON is missing required analytical fields");
@@ -237,7 +242,7 @@ function normalizeAgent(
     statisticalVariance,
     predictiveMetrics: {
       adjustedRunwayDays: round1(Math.max(0, adjustedRunwayDays)),
-      probabilityOfSuccess: toUnit(probabilityOfSuccess),
+      scenarioConfidence: toUnit(scenarioConfidence),
     },
     quantitativeRiskScore: toScore100(quantitativeRiskScore),
     confidence: toUnit(confidence),

@@ -11,7 +11,7 @@ import { checkFinancialHealth } from "./healthCheck";
 
 export interface AgentPredictiveMetrics {
   adjustedRunwayDays: number; // days of runway under the agent's stress model
-  probabilityOfSuccess: number; // 0..1
+  scenarioConfidence: number; // 0..1
 }
 
 export interface AgentResponse {
@@ -61,7 +61,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
     statisticalVariance: `Operating burn sensitivity: a ±5% operating-burn swing moves the cash-zero runway between ${runwayLow} and ${runwayHigh} days.`,
     predictiveMetrics: {
       adjustedRunwayDays: runwayLow, // stressed (+5% burn) runway
-      probabilityOfSuccess: cfoProbability,
+      scenarioConfidence: cfoProbability,
     },
     quantitativeRiskScore: cfoRiskScore,
     confidence: 0.82,
@@ -110,7 +110,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
     )} outstanding; ${targetName} modelled at ${targetPct}% settlement.`,
     predictiveMetrics: {
       adjustedRunwayDays: collAdjRunway,
-      probabilityOfSuccess: collProbability,
+      scenarioConfidence: collProbability,
     },
     quantitativeRiskScore: collRiskScore,
     confidence: 0.78,

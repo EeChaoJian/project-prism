@@ -93,15 +93,14 @@ export default function Home() {
         <header className="mb-8">
           <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
             <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
-            Executive Treasury Console
+            AI Boardroom for SME financial decisions
           </div>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
             Project Prism — Cash-Flow Stress-Testing Engine
           </h1>
           <p className="mt-3 max-w-2xl font-normal text-neutral-500">
-            Configure your company profile below, then convene an AI boardroom
-            to stress-test mitigation pathways against deterministic treasury
-            logic.
+            Configure your company profile, then convene an AI boardroom to
+            weigh your options before you decide.
           </p>
         </header>
 
@@ -117,14 +116,14 @@ export default function Home() {
       <header className="mb-8">
         <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
           <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
-          Executive Treasury Console
+          AI Boardroom for SME financial decisions
         </div>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
           Project Prism — Cash-Flow Stress-Testing Engine
         </h1>
         <p className="mt-3 max-w-2xl font-normal text-neutral-500">
-          Detect the crunch early, convene an AI boardroom, and stress-test each
-          mitigation pathway against deterministic treasury logic.
+          Spot the crunch early, convene an AI boardroom, and weigh each option
+          before you decide.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
           <span>
@@ -151,11 +150,11 @@ export default function Home() {
                 <span aria-hidden>🚨</span> Emergency Board Meeting Required
               </div>
               <p className="mt-2 text-lg font-semibold tracking-tight sm:text-xl">
-                Payroll risk detected in {company.payrollDueInDays} days.
+                Payroll may fail in {company.payrollDueInDays} days. The
+                boardroom has been called.
               </p>
               <p className="mt-2 text-sm text-neutral-300">
-                The Board of Directors is standing by. Convene the boardroom
-                immediately to stress-test corporate mitigation pathways.
+                Objective: maintain payroll while maximizing runway.
               </p>
             </div>
             <button

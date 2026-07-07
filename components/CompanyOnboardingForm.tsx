@@ -449,7 +449,7 @@ export default function CompanyOnboardingForm({
           type="submit"
           className="rounded-xl bg-neutral-900 px-6 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-neutral-800"
         >
-          Launch Treasury Console →
+          Open Dashboard →
         </button>
       </div>
     </form>

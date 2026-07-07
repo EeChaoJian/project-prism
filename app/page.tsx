@@ -102,8 +102,7 @@ export default function Home() {
           <div className="text-4xl font-semibold text-neutral-900" aria-hidden>
             !
           </div>
-          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-neutral-500">
-            <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
+          <div className="mt-3 text-sm font-medium text-neutral-500">
             Payroll Risk Detected
           </div>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
@@ -127,8 +126,7 @@ export default function Home() {
     <main className="mx-auto max-w-6xl px-6 py-12">
       {/* Executive hero */}
       <header className="mb-8">
-        <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-          <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
+        <div className="text-sm font-medium text-neutral-500">
           Payroll Risk Detected
         </div>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">

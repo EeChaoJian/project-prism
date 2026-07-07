@@ -79,7 +79,7 @@ export async function POST(req: Request) {
         `[SYSTEM]: Cash balance alert triggered. Deficit in t-${state.payrollDueInDays} days.`
       );
       await log(
-        `[SYSTEM]: Deterministic matrix locked — expected collections ${rm(
+        `[SYSTEM]: Cash-flow baseline locked — expected collections ${rm(
           health.expectedCollections
         )}, payroll gap ${rm(health.payrollGap)}.`
       );

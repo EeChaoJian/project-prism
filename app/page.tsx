@@ -151,9 +151,7 @@ export default function Home() {
                 <span aria-hidden>🚨</span> Emergency Board Meeting Required
               </div>
               <p className="mt-2 text-lg font-semibold tracking-tight sm:text-xl">
-                Critical payroll risk detected. Projected baseline cash-flow
-                falls short by {rm(health.payrollGap)} before the{" "}
-                {company.payrollDueInDays}-day deadline.
+                Payroll risk detected in {company.payrollDueInDays} days.
               </p>
               <p className="mt-2 text-sm text-neutral-300">
                 The Board of Directors is standing by. Convene the boardroom
@@ -166,10 +164,10 @@ export default function Home() {
               className="shrink-0 rounded-xl bg-white px-5 py-2.5 font-medium text-neutral-900 shadow-sm transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {boardStatus === "idle"
-                ? "Convene the Boardroom"
+                ? "Convene Boardroom"
                 : boardStatus === "running"
                   ? "Convening…"
-                  : "Re-convene the Boardroom"}
+                  : "Re-convene Boardroom"}
             </button>
           </div>
         </section>
@@ -191,10 +189,10 @@ export default function Home() {
               className={`shrink-0 ${PRIMARY_BUTTON} disabled:cursor-not-allowed disabled:opacity-50`}
             >
               {boardStatus === "idle"
-                ? "Convene the Boardroom"
+                ? "Convene Boardroom"
                 : boardStatus === "running"
                   ? "Convening…"
-                  : "Re-convene the Boardroom"}
+                  : "Re-convene Boardroom"}
             </button>
           </div>
         </section>
@@ -260,7 +258,7 @@ export default function Home() {
             >
               {boardStatus === "running"
                 ? "Convening…"
-                : "Re-convene the Boardroom"}
+                : "Re-convene Boardroom"}
             </button>
           )}
         </div>
@@ -269,7 +267,7 @@ export default function Home() {
           <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500">
             Click{" "}
             <span className="font-medium text-neutral-900">
-              Convene the Boardroom
+              Convene Boardroom
             </span>{" "}
             to generate the CFO and Collections Manager analysis for{" "}
             {company.companyName}&apos;s current financial state.
@@ -376,8 +374,8 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-neutral-200 pt-6 text-xs text-neutral-400">
-        Project Prism · AI Boardroom MVP · Numbers come from simulation logic,
-        not AI.
+        Project Prism · AI Boardroom MVP · Numbers from simulation, reasoning
+        from AI.
       </footer>
     </main>
   );

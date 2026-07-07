@@ -99,7 +99,7 @@ export default function Home() {
           </div>
           <div className="mt-3 flex items-center gap-2 text-sm font-medium text-neutral-500">
             <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
-            Emergency Board Meeting
+            Payroll Risk Detected
           </div>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
             {health.payrollRisk
@@ -124,7 +124,7 @@ export default function Home() {
       <header className="mb-8">
         <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
           <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
-          Emergency Board Meeting
+          Payroll Risk Detected
         </div>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
           Payroll may fail in {company.payrollDueInDays} days. The boardroom has

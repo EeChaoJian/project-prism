@@ -51,17 +51,12 @@ guarantees consistent outcomes.
 
 The deterministic engine owns the math:
 
-```
-Financial inputs
-        │
-        ▼
-Deterministic simulation
-        │
-        ▼
-Updated metrics
-        ▲
-        │
-AI boardroom reasoning
+```mermaid
+flowchart TD
+    A["Financial inputs"] --> B["Deterministic simulation"]
+    B --> C["Updated metrics"]
+    D["AI boardroom reasoning"] --> C
+    C --> E["Owner decision"]
 ```
 
 That split is the product's credibility: useful boardroom reasoning without

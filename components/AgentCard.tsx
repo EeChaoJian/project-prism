@@ -55,6 +55,9 @@ export default function AgentCard({ agent }: { agent: AgentResponse }) {
           <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-neutral-900">
             {scenarioConfidence}%
           </div>
+          <div className="mt-0.5 text-[11px] text-neutral-400">
+            Based on current assumptions
+          </div>
         </div>
       </div>
     </div>

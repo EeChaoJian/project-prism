@@ -38,11 +38,11 @@ export const BOARDROOM_STEPS = [
 // Human-readable label for the current phase (shown in the console header).
 export const PHASE_LABEL: Record<BoardPhase, string> = {
   idle: "Idle",
-  analyzing_metrics: "Reviewing scenario",
-  cfo_processing: "CFO reviewing",
+  analyzing_metrics: "Reviewing the scenario",
+  cfo_processing: "Analyzing liquidity",
   handoff_context: "Reconciling priorities",
-  collections_processing: "Collections reviewing",
-  synchronized: "Board ready",
+  collections_processing: "Reviewing receivables",
+  synchronized: "Preparing recommendation",
 };
 
 // Map a phase to the 1-based active step for the compact stepper.

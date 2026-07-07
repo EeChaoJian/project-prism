@@ -31,18 +31,18 @@ export type BoardroomEvent =
 
 // Labels for the compact two-step indicator.
 export const BOARDROOM_STEPS = [
-  "Step 1: CFO Analyzing Liquidity Baseline...",
-  "Step 2: Collections Manager Evaluating Outstanding Account Receivables...",
+  "CFO checks payroll and runway...",
+  "Collections Manager checks overdue invoices...",
 ];
 
 // Human-readable label for the current phase (shown in the console header).
 export const PHASE_LABEL: Record<BoardPhase, string> = {
   idle: "Idle",
-  analyzing_metrics: "Analyzing metrics",
-  cfo_processing: "CFO processing",
-  handoff_context: "Context handoff",
-  collections_processing: "Collections processing",
-  synchronized: "Synchronized",
+  analyzing_metrics: "Reviewing scenario",
+  cfo_processing: "CFO reviewing",
+  handoff_context: "Reconciling priorities",
+  collections_processing: "Collections reviewing",
+  synchronized: "Board ready",
 };
 
 // Map a phase to the 1-based active step for the compact stepper.

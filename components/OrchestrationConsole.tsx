@@ -1,11 +1,9 @@
 "use client";
 
-// Boardroom Live Orchestration Console.
+// Boardroom thinking trace.
 //
-// A high-end minimalist utility window that renders the live state trace
-// streamed from /api/boardroom. Monochrome: the [TAG] prefix is charcoal, the
-// message mid-gray. The current phase is shown in the header. Auto-scrolls to
-// the newest line.
+// Renders the live boardroom trace streamed from /api/boardroom. The current
+// phase is shown in the header and the newest line stays in view.
 
 import { useEffect, useRef } from "react";
 import { PHASE_LABEL, type BoardPhase } from "@/lib/boardroom";
@@ -52,7 +50,7 @@ export default function OrchestrationConsole({
           <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
         </div>
         <span className="font-medium text-neutral-500">
-          Boardroom Live Orchestration Console
+          Boardroom thinking
         </span>
         <span className="ml-auto flex items-center gap-2 text-[11px] text-neutral-500">
           <span
@@ -68,7 +66,7 @@ export default function OrchestrationConsole({
       <div className="max-h-56 overflow-y-auto p-4 leading-relaxed">
         {logs.length === 0 ? (
           <div className="text-neutral-400">
-            {active ? "initializing orchestration…" : "awaiting orchestration…"}
+            {active ? "preparing the board…" : "waiting for the board…"}
           </div>
         ) : (
           <ol className="space-y-1">

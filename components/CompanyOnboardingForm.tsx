@@ -1,6 +1,6 @@
 "use client";
 
-// Onboarding / Company Profile Configuration form.
+// Onboarding / business profile form.
 //
 // Captures live business metrics and compiles them into the FinancialState
 // consumed by the deterministic engine. Field values are held as strings while
@@ -143,9 +143,9 @@ export default function CompanyOnboardingForm({
     const state: FinancialState = {
       companyName: draft.companyName.trim(),
       cashBalance: parseNumber("Current cash balance", draft.currentCashBalance, nextErrors),
-      monthlyRevenue: parseNumber("Monthly revenue", draft.monthlyRevenue, nextErrors),
-      payrollAmount: parseNumber("Monthly payroll overhead", draft.monthlyPayrollOverhead, nextErrors),
-      monthlyOpex: parseNumber("Fixed operating expenses", draft.fixedOperatingExpenses, nextErrors),
+      monthlyRevenue: parseNumber("Monthly revenue", draft.monthlyRevenue, nextErrors, { min: 1 }),
+      payrollAmount: parseNumber("Monthly payroll overhead", draft.monthlyPayrollOverhead, nextErrors, { min: 1 }),
+      monthlyOpex: parseNumber("Fixed operating expenses", draft.fixedOperatingExpenses, nextErrors, { min: 1 }),
       payrollDueInDays: parseNumber("Payroll due in (days)", draft.payrollDueInDays, nextErrors, { min: 1, max: 365, integer: true }),
       equipmentPurchase: parseNumber("Scheduled equipment spend", draft.scheduledEquipmentSpend, nextErrors),
       invoices: draft.invoices
@@ -172,11 +172,11 @@ export default function CompanyOnboardingForm({
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
-            Company Profile Configuration
+            Welcome to Project Prism
           </h2>
           <p className="mt-1 max-w-xl text-sm text-neutral-500">
-            Enter your live business metrics, or load the sample payroll-crisis
-            scenario. Every dashboard figure is computed from these inputs.
+            Tell us about your business, or load the sample payroll-crisis
+            scenario. Every boardroom number is computed from these inputs.
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
@@ -239,7 +239,7 @@ export default function CompanyOnboardingForm({
           <input
             id="revenue"
             type="number"
-            min={0}
+            min={1}
             className={INPUT}
             placeholder="38000"
             value={draft.monthlyRevenue}
@@ -253,7 +253,7 @@ export default function CompanyOnboardingForm({
           <input
             id="payroll"
             type="number"
-            min={0}
+            min={1}
             className={INPUT}
             placeholder="15000"
             value={draft.monthlyPayrollOverhead}
@@ -267,7 +267,7 @@ export default function CompanyOnboardingForm({
           <input
             id="opex"
             type="number"
-            min={0}
+            min={1}
             className={INPUT}
             placeholder="5000"
             value={draft.fixedOperatingExpenses}
@@ -374,7 +374,7 @@ export default function CompanyOnboardingForm({
                 </div>
                 <div>
                   <label htmlFor={`inv-prob-${i}`} className={LABEL}>
-                    Collection Probability (%)
+                    Collection Confidence (%)
                   </label>
                   <input
                     id={`inv-prob-${i}`}
@@ -445,11 +445,11 @@ export default function CompanyOnboardingForm({
       )}
 
       <div className="mt-8 flex justify-end">
-        <button
-          type="submit"
-          className="rounded-xl bg-neutral-900 px-6 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-neutral-800"
-        >
-          Launch Treasury Console →
+          <button
+            type="submit"
+            className="rounded-xl bg-neutral-900 px-6 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-neutral-800"
+          >
+          Convene Boardroom →
         </button>
       </div>
     </form>

@@ -1,9 +1,8 @@
-// Decision Parameter Customizer.
+// Decision assumptions.
 //
-// Lets the owner tune the financial variables behind each boardroom choice
-// before (or after) running the simulation. Values feed straight into
-// simulateDecision(), so the decision buttons, result panel, and metric
-// deltas always reflect exactly what is configured here.
+// Lets the owner choose the assumptions behind each boardroom choice. Values
+// feed straight into simulateDecision(), so the decision buttons, result panel,
+// and metric deltas always reflect the selected scenario.
 
 import type { FinancialState } from "@/lib/financialState";
 import type { DecisionParameters } from "@/lib/simulation";
@@ -31,11 +30,11 @@ export default function DecisionCustomizer({
     <div className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm transition-all duration-200">
       <div className="mb-4">
         <h3 className="text-sm font-semibold tracking-tight text-neutral-900">
-          Decision Parameter Customizer
+          Decision Assumptions
         </h3>
         <p className="text-xs text-neutral-500">
-          Tune the variables behind each strategy. The simulation and decision
-          cards update from these values.
+          Choose the assumptions behind each response. The simulation and
+          decision cards update from these values.
         </p>
       </div>
 
@@ -86,7 +85,7 @@ export default function DecisionCustomizer({
             </div>
             <div>
               <label htmlFor="dc-prob" className={LABEL}>
-                Estimated Settlement Probability (%)
+                Settlement Confidence (%)
               </label>
               <input
                 id="dc-prob"

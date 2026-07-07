@@ -54,12 +54,11 @@ export const initialFinancialState: FinancialState = {
 };
 
 // ---------------------------------------------------------------------------
-// Lookalike Cohort Analysis (Case-Based Reasoning)
+// Synthetic Demo Benchmark Data
 //
-// Rather than reasoning in a vacuum, the boardroom anchors its debate on an
-// empirical "twin" cohort: real businesses whose risk parameters match Prism
-// Cafe Supplies. These historical outcomes give the agents grounded precedents
-// to cite. (This is a hardcoded mock dataset for the MVP.)
+// This hardcoded cohort is illustrative benchmark data for the hackathon demo.
+// It is not live market data and should not be presented as verified evidence.
+// The boardroom can cite it only as a synthetic comparison point.
 // ---------------------------------------------------------------------------
 
 export interface LookalikeCohort {
@@ -74,8 +73,8 @@ export interface LookalikeCohort {
   };
 }
 
-// Matched cohort of 147 retail / F&B suppliers sharing Prism Cafe Supplies'
-// risk profile: sub-20-day runway, a payroll gap over RM4,000, and highly
+// Synthetic cohort of 147 retail / F&B suppliers sharing Prism Cafe Supplies'
+// demo risk profile: sub-20-day runway, a payroll gap over RM4,000, and highly
 // concentrated overdue receivables.
 export const lookalikeCohortData: LookalikeCohort = {
   cohortId: "CH-RETAIL-SUPPLY-04",

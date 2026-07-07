@@ -15,12 +15,10 @@ cash, runway, and payroll risk.
 
 This build pairs a **deterministic core** — the safety net for the whole demo —
 with a completed, live **sequential streaming multi-agent boardroom**. The CFO
-(Strategic Financial Officer) and Collections Manager (Risk Operations Manager)
-run as two sequential Fireworks AI inferences: the CFO's output is streamed into
-the Collections Manager's context so the two agents reach an explicit strategic
-disagreement, and every token of the orchestration is streamed to a live
-terminal console over NDJSON. Every number on the screen still comes from plain,
-testable TypeScript logic, and the whole boardroom falls back to a static,
+and Collections Manager run as two sequential Fireworks AI inferences: the
+CFO's output is streamed into the Collections Manager's context so the agents
+can disagree from different priorities. Every number on the screen still comes
+from plain, testable TypeScript logic, and the boardroom falls back to a static,
 schema-identical mock whenever a key is absent or a call fails.
 
 ### The core loop
@@ -43,7 +41,7 @@ Risk detected → agents respond → owner chooses → simulation updates
 Clicking **Convene the Boardroom** streams a live, two-step analysis:
 
 - **Step 1 — CFO** evaluates the deterministic financial numbers and returns a
-  structured JSON strategy (liquidity / runway / payroll focus).
+  headline, recommendation, three bullets, primary risk, and scenario confidence.
 - **Step 2 — Collections Manager** receives the CFO's *literal* output, reads
   its stance, and responds from the receivables angle.
 
@@ -54,6 +52,13 @@ streams NDJSON events so the UI shows a live "Step 1 → Step 2" indicator.
 **The AI never invents numbers.** Every figure comes from the deterministic
 engine; the agents only produce natural-language reasoning. Their JSON is
 schema-validated server-side.
+
+**Scenario confidence is deterministic.** The displayed confidence reflects
+whether that agent's recommended response protects payroll in the simulation.
+
+**Benchmark data is synthetic.** The lookalike cohort is hardcoded demo
+benchmark data for the hackathon. It is used only as illustrative context, not
+as verified market evidence.
 
 **No key? It still works.** If `FIREWORKS_API_KEY` is missing, the API errors,
 or a response fails to decode, the route automatically falls back to the static
@@ -79,7 +84,7 @@ npm run dev
 
 Then open [http://localhost:3000](http://localhost:3000).
 
-The app runs **with no configuration** — the boardroom uses the offline
+The app runs **with no setup** — the boardroom uses the offline
 fallback. To enable live AI, add a Fireworks key:
 
 ```bash
@@ -98,15 +103,15 @@ project-prism/
 ├── app/
 │   ├── api/
 │   │   └── boardroom/
-│   │       └── route.ts    # Sequential CFO → Collections orchestration (streamed)
+│   │       └── route.ts    # Sequential CFO → Collections boardroom stream
 │   ├── layout.tsx          # Root layout + metadata
 │   ├── page.tsx            # Dashboard: wires everything together
 │   └── globals.css         # Tailwind + background styling
 ├── components/
 │   ├── MetricCard.tsx           # Dashboard metric card (with before/after)
-│   ├── AgentCard.tsx            # Agent card: reasoning + predictive metrics
+│   ├── AgentCard.tsx            # Agent card: recommendation, bullets, risk, confidence
 │   ├── BoardroomStatus.tsx      # Compact sequential step indicator
-│   ├── OrchestrationConsole.tsx # Live monospace state-trace terminal
+│   ├── OrchestrationConsole.tsx # Live boardroom thinking trace
 │   ├── DecisionPanel.tsx        # Owner decision buttons
 │   └── CashFlowChart.tsx        # Projected cash chart (Recharts)
 ├── lib/

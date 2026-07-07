@@ -4,8 +4,8 @@
 // object conforms to BoardroomEvent (see lib/boardroom.ts), so the client can
 // parse the stream back into strict types with no `any`.
 //
-// The run advances through multiple phases, emitting a professional state trace
-// the UI renders in a live terminal console:
+// The run advances through multiple phases, emitting a boardroom thinking trace
+// the UI renders live:
 //   phase: analyzing_metrics → cfo_processing → handoff_context →
 //          collections_processing → synchronized
 //
@@ -26,11 +26,15 @@ import type { BoardroomEvent, BoardSource } from "@/lib/boardroom";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Cadence for streamed log lines so the console reads like a live trace. This
+// Cadence for streamed log lines so the boardroom reads like a live trace. This
 // is UI pacing only — it never gates the deterministic result.
 const LOG_PACING_MS = 220;
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
+const nonNegative = (value: unknown, fallback = 0) =>
+  typeof value === "number" && Number.isFinite(value)
+    ? Math.max(0, value)
+    : fallback;
 
 // Accept a posted state only if it structurally looks like a FinancialState;
 // otherwise fall back to the hardcoded demo company.
@@ -45,7 +49,39 @@ function resolveState(body: unknown): FinancialState {
     typeof state.monthlyOpex === "number" &&
     Array.isArray(state.invoices)
   ) {
-    return state as FinancialState;
+    return {
+      companyName:
+        typeof state.companyName === "string" && state.companyName.trim()
+          ? state.companyName.trim()
+          : initialFinancialState.companyName,
+      cashBalance: nonNegative(state.cashBalance),
+      monthlyRevenue: Math.max(1, nonNegative(state.monthlyRevenue, 1)),
+      monthlyOpex: Math.max(1, nonNegative(state.monthlyOpex, 1)),
+      payrollAmount: Math.max(1, nonNegative(state.payrollAmount, 1)),
+      payrollDueInDays: Math.max(1, nonNegative(state.payrollDueInDays, 1)),
+      equipmentPurchase: nonNegative(state.equipmentPurchase),
+      invoices: state.invoices.map((invoice, index) => {
+        const inv = invoice as Partial<FinancialState["invoices"][number]>;
+        return {
+          client:
+            typeof inv.client === "string" && inv.client.trim()
+              ? inv.client.trim()
+              : `Client ${index + 1}`,
+          amount: nonNegative(inv.amount),
+          daysOverdue: nonNegative(inv.daysOverdue),
+          collectionProbability: Math.min(
+            1,
+            Math.max(0, nonNegative(inv.collectionProbability))
+          ),
+          relationshipRisk:
+            inv.relationshipRisk === "Low" ||
+            inv.relationshipRisk === "Medium" ||
+            inv.relationshipRisk === "High"
+              ? inv.relationshipRisk
+              : "Medium",
+        };
+      }),
+    };
   }
   return initialFinancialState;
 }
@@ -75,32 +111,25 @@ export async function POST(req: Request) {
 
       // ---- PHASE: analyzing_metrics ---------------------------------------
       send({ type: "phase", phase: "analyzing_metrics" });
+      await log("[BOARDROOM]: Analyzing cash position...");
       await log(
-        `[SYSTEM]: Cash balance alert triggered. Deficit in t-${state.payrollDueInDays} days.`
+        `[BOARDROOM]: Payroll is due in ${state.payrollDueInDays} days. Current gap: ${rm(
+          health.payrollGap
+        )}.`
+      );
+      // Synthetic benchmark context for the demo. This is not live market data.
+      await log("[BOARDROOM]: Reviewing synthetic demo benchmark data...");
+      await log(
+        "[BOARDROOM]: Comparing this scenario with a synthetic SME cash-flow cohort..."
       );
       await log(
-        `[SYSTEM]: Cash-flow baseline locked — expected collections ${rm(
-          health.expectedCollections
-        )}, payroll gap ${rm(health.payrollGap)}.`
+        `[BOARDROOM]: Benchmark ${lookalikeCohortData.cohortId} loaded (synthetic n=${lookalikeCohortData.sampleSize}).`
       );
-      // Lookalike Cohort Analysis — surface the empirical-twin retrieval live.
-      await log("[SYSTEM]: Initializing macro-vector lookalike scanner...");
-      await log(
-        "[SYSTEM]: Querying regional SME performance registry for cash-flow twins..."
-      );
-      await log(
-        `[SYSTEM]: Match found: Cohort ${lookalikeCohortData.cohortId} (n=${lookalikeCohortData.sampleSize}). Overlapping risk parameters: Runway < 20d, Payroll Gap > RM4k, High AR Concentration.`
-      );
-      await log(
-        "[SYSTEM]: Injecting cohort operational benchmarks into Strategic Financial Officer context window..."
-      );
+      await log("[BOARDROOM]: Preparing board recommendations...");
 
       // ---- PHASE: cfo_processing (INFERENCE 1) ----------------------------
       send({ type: "phase", phase: "cfo_processing" });
-      await log(
-        "[AMD-CLOUD]: Routing financial state matrix to Llama-3.1-70B instance..."
-      );
-      await log("[CFO_AGENT]: Analyzing payroll hurdle rates...");
+      await log("[CFO]: Reviewing payroll and operating burn...");
       let cfo: AgentResponse;
       try {
         cfo = await runCFO(state, health);
@@ -110,26 +139,16 @@ export async function POST(req: Request) {
         cfo = fallbackCfo;
         if (!online) await delay(400);
       }
-      await log(
-        `[CFO_AGENT]: Operating-burn sensitivity resolved. Adjusted runway ${cfo.predictiveMetrics.adjustedRunwayDays.toFixed(
-          1
-        )}d @ +5% burn · risk ${cfo.quantitativeRiskScore}/100 · conf ${cfo.confidence.toFixed(
-          2
-        )}.`
-      );
+      await log(`[CFO]: Recommendation ready — ${cfo.recommendation}`);
       send({ type: "agent", agent: cfo });
 
       // ---- PHASE: handoff_context -----------------------------------------
       send({ type: "phase", phase: "handoff_context" });
-      await log(
-        "[ORCHESTRATOR]: Injecting CFO liquidity stance into step-2 prompt context..."
-      );
+      await log("[BOARDROOM]: Reconciling stakeholder priorities...");
 
       // ---- PHASE: collections_processing (INFERENCE 2) --------------------
       send({ type: "phase", phase: "collections_processing" });
-      await log(
-        "[COLLECTIONS_AGENT]: Re-evaluating Accounts Receivable vs CFO constraints..."
-      );
+      await log("[COLLECTIONS]: Reviewing receivables recovery assumptions...");
       let collections: AgentResponse;
       try {
         collections = await runCollections(state, health, cfo);
@@ -141,20 +160,12 @@ export async function POST(req: Request) {
         collections = fallbackCollections;
         if (!online) await delay(400);
       }
-      await log(
-        `[COLLECTIONS_AGENT]: Receivables recovery compiled. Scenario Confidence ${(
-          collections.predictiveMetrics.probabilityOfSuccess * 100
-        ).toFixed(1)}% · risk ${collections.quantitativeRiskScore}/100 · conf ${collections.confidence.toFixed(
-          2
-        )}.`
-      );
+      await log(`[COLLECTIONS]: Counterpoint ready — ${collections.recommendation}`);
       send({ type: "agent", agent: collections });
 
       // ---- PHASE: synchronized --------------------------------------------
       send({ type: "phase", phase: "synchronized" });
-      await log(
-        "[SYSTEM]: Orchestration completed. Boardroom state synchronized."
-      );
+      await log("[BOARDROOM]: Board synchronized. Owner decision required.");
       send({ type: "done", source });
       controller.close();
     },

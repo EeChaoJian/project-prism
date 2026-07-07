@@ -7,48 +7,43 @@
 // internally consistent with the dashboard.
 
 import type { FinancialState, Invoice } from "./financialState";
-import { checkFinancialHealth } from "./healthCheck";
-
-export interface AgentPredictiveMetrics {
-  adjustedRunwayDays: number; // days of runway under the agent's stress model
-  probabilityOfSuccess: number; // 0..1
-}
+import {
+  defaultDecisionParameters,
+  simulateDecision,
+  type DecisionAction,
+} from "./simulation";
 
 export interface AgentResponse {
   agent: "CFO" | "Collections Manager";
   role: string;
   headline: string;
-  position: string;
-  recommendedAction: string;
+  recommendation: string;
   reasoning: string[];
-  statisticalVariance: string;
-  predictiveMetrics: AgentPredictiveMetrics;
-  quantitativeRiskScore: number; // 0..100 (higher = riskier)
-  confidence: number; // 0..1
+  risk: string;
+  scenarioConfidence: number; // 0..1
 }
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
-const round1 = (n: number) => Math.round(n * 10) / 10;
+export const payrollCoverageConfidence = (
+  state: FinancialState,
+  action: DecisionAction
+) => {
+  const result = simulateDecision(state, action, defaultDecisionParameters(state));
+  if (state.payrollAmount <= 0) return 1;
+  return clamp01(result.after.projectedCashBeforePayroll / state.payrollAmount);
+};
 
 export function getAgentResponses(state: FinancialState): AgentResponse[] {
-  const health = checkFinancialHealth(state);
   const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
-  const dailyBurn = state.monthlyOpex / 30;
 
-  // ---- CFO — operating burn sensitivity on runway ----------------------
-  const runwayHigh = round1(state.cashBalance / (dailyBurn * 0.95)); // −5% burn
-  const runwayLow = round1(state.cashBalance / (dailyBurn * 1.05)); // +5% burn
-  const cfoProbability = clamp01(
-    health.projectedCashBeforePayroll / state.payrollAmount
-  );
-  const cfoRiskScore = Math.round((1 - cfoProbability) * 100);
+  // ---- CFO — protect payroll liquidity ---------------------------------
+  const cfoConfidence = payrollCoverageConfidence(state, "delay_equipment");
 
   const cfo: AgentResponse = {
     agent: "CFO",
-    role: "Strategic Financial Officer — corporate liquidity, runway constraints, and operating burn sensitivity.",
+    role: "Liquidity, payroll, and runway.",
     headline: "Delay equipment. Payroll comes first.",
-    position: `Payroll lands in ${state.payrollDueInDays} days and baseline cash will not cover it. Cutting a scheduled outflow is the only deterministic way to secure it.`,
-    recommendedAction: "Delay Equipment Purchase.",
+    recommendation: "I recommend delaying the equipment purchase to protect payroll.",
     reasoning: [
       `Cash is ${rm(state.cashBalance)}; payroll is ${rm(
         state.payrollAmount
@@ -56,65 +51,57 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
       `Releasing the earmarked ${rm(
         state.equipmentPurchase
       )} equipment payment puts that liquidity straight back into reserves.`,
-      `Banking on overdue balances from high relationship-risk accounts to close the gap is irresponsible treasury management.`,
+      "Waiting for overdue invoices adds timing risk when payroll has a fixed deadline.",
     ],
-    statisticalVariance: `Operating burn sensitivity: a ±5% operating-burn swing moves the cash-zero runway between ${runwayLow} and ${runwayHigh} days.`,
-    predictiveMetrics: {
-      adjustedRunwayDays: runwayLow, // stressed (+5% burn) runway
-      probabilityOfSuccess: cfoProbability,
-    },
-    quantitativeRiskScore: cfoRiskScore,
-    confidence: 0.82,
+    risk: "Operations may slow if the equipment purchase is delayed.",
+    scenarioConfidence: cfoConfidence,
   };
 
   // ---- Collections — receivables recovery assumptions ------------------
   // Target the largest outstanding receivable in whatever state was supplied,
   // so custom company profiles get coherent fallback narratives too.
-  const totalReceivables = state.invoices.reduce((sum, i) => sum + i.amount, 0);
   const target = state.invoices.reduce<Invoice | undefined>(
     (top, inv) => (!top || inv.amount > top.amount ? inv : top),
     undefined
   );
   const targetName = target?.client ?? "the top receivable";
   const targetPct = Math.round((target?.collectionProbability ?? 0) * 100);
-  const targetExpected = target
-    ? target.amount * target.collectionProbability
+  const collectionsConfidence = target
+    ? payrollCoverageConfidence(state, "prioritize_alpha")
     : 0;
-  const collProbability = clamp01(
-    totalReceivables > 0 ? health.expectedCollections / totalReceivables : 0
-  );
-  const collAdjRunway = round1(
-    (state.cashBalance + targetExpected) / dailyBurn
-  );
-  const collRiskScore = Math.round((1 - collProbability) * 100);
 
-  const collections: AgentResponse = {
-    agent: "Collections Manager",
-    role: "Risk Operations Manager — receivables recovery assumptions and collection aging models.",
-    headline: `Chase ${targetName}. Don't freeze growth.`,
-    position: `The CFO's freeze protects cash but stalls operations for a full month. We solve this by collecting, not cutting.`,
-    recommendedAction: `Prioritize ${targetName}.`,
-    reasoning: [
-      `${targetName} carries ${targetPct}% scenario confidence on its ${rm(
-        target?.amount ?? 0
-      )} outstanding balance — a reliable near-term influx.`,
-      `Under a standard age-of-receivables aging model, that recovery lands fast enough to cover payroll.`,
-      `Freezing the ${rm(
-        state.equipmentPurchase
-      )} equipment spend chokes the operational momentum this business needs to grow.`,
-    ],
-    statisticalVariance: `Receivables recovery assumptions: ${rm(
-      health.expectedCollections
-    )} expected of ${rm(
-      totalReceivables
-    )} outstanding; ${targetName} modelled at ${targetPct}% settlement.`,
-    predictiveMetrics: {
-      adjustedRunwayDays: collAdjRunway,
-      probabilityOfSuccess: collProbability,
-    },
-    quantitativeRiskScore: collRiskScore,
-    confidence: 0.78,
-  };
+  const collections: AgentResponse = target
+    ? {
+        agent: "Collections Manager",
+        role: "Receivables and overdue invoices.",
+        headline: `Chase ${targetName}. Don't freeze growth.`,
+        recommendation: `I disagree. Prioritize ${targetName} before freezing operations.`,
+        reasoning: [
+          `${targetName} carries ${targetPct}% settlement confidence on its ${rm(
+            target.amount
+          )} outstanding balance.`,
+          "Receivables recovery may preserve payroll without delaying the equipment plan.",
+          `Freezing the ${rm(
+            state.equipmentPurchase
+          )} equipment spend may cost momentum after the crisis passes.`,
+        ],
+        risk: "The invoice may not arrive before payroll is due.",
+        scenarioConfidence: collectionsConfidence,
+      }
+    : {
+        agent: "Collections Manager",
+        role: "Receivables and overdue invoices.",
+        headline: "No receivables to recover.",
+        recommendation:
+          "I cannot recommend a collections play without outstanding invoices.",
+        reasoning: [
+          "There are no overdue invoices available to chase.",
+          "Receivables recovery cannot close the payroll gap in this scenario.",
+          "The owner should focus on cash preservation or another immediate response.",
+        ],
+        risk: "The business has no receivables lever to pull before payroll.",
+        scenarioConfidence: 0,
+      };
 
   return [cfo, collections];
 }

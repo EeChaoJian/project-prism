@@ -342,17 +342,15 @@ Each agent should return structured JSON.
 Format:
 
 {
-  "agent": "CFO",
   "headline": "Preserve liquidity before payroll",
-  "position": "The business is exposed to payroll risk in 18 days.",
-  "recommendedAction": "Delay the equipment purchase.",
+  "recommendation": "I recommend delaying the equipment purchase to protect payroll.",
   "reasoning": [
     "Cash balance is currently RM12,000.",
     "Payroll obligation is RM18,000.",
     "Preserving RM7,000 improves short-term liquidity."
   ],
   "risk": "Delaying equipment may slow operational improvements.",
-  "confidence": 0.82
+  "scenarioConfidence": 0.82
 }
 
 Do not allow agents to invent new financial numbers. They must use numbers from the current financial state.

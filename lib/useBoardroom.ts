@@ -131,9 +131,9 @@ export function useBoardroom() {
         status: "done",
         phase: "synchronized",
         logs: [
-          "[SYSTEM]: Live orchestration channel unavailable.",
-          "[SYSTEM]: Restoring cached boardroom snapshot...",
-          "[SYSTEM]: Boardroom state synchronized.",
+          "[BOARDROOM]: Live boardroom unavailable.",
+          "[BOARDROOM]: Restoring prepared recommendations...",
+          "[BOARDROOM]: Board synchronized. Owner decision required.",
         ],
         board: [cfo, collections],
         source: "fallback",

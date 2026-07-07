@@ -25,7 +25,9 @@ import {
   type SimulationResult,
 } from "@/lib/simulation";
 
-const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
+const safeNumber = (n: number) => (Number.isFinite(n) ? n : 0);
+const rm = (n: number) => `RM${Math.round(safeNumber(n)).toLocaleString()}`;
+const days = (n: number) => `${Math.round(safeNumber(n)).toLocaleString()} days`;
 
 // Shared monochrome tokens.
 const CARD =
@@ -70,6 +72,7 @@ export default function Home() {
     setSelected(null);
     reset(); // never show a stale board against fresh financial data
     setView("boardroom");
+    void convene(next);
   }
 
   function handleDecide(action: DecisionAction) {
@@ -93,15 +96,15 @@ export default function Home() {
         <header className="mb-8">
           <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
             <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
-            Executive Treasury Console
+            Emergency Board Meeting
           </div>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
-            Project Prism — Cash-Flow Stress-Testing Engine
+            {health.payrollRisk
+              ? `Payroll may fail in ${company.payrollDueInDays} days. The boardroom has been called.`
+              : "Prepare the board before payroll is due."}
           </h1>
           <p className="mt-3 max-w-2xl font-normal text-neutral-500">
-            Configure your company profile below, then convene an AI boardroom
-            to stress-test mitigation pathways against deterministic treasury
-            logic.
+            Let&apos;s understand your business before we convene the board.
           </p>
         </header>
 
@@ -117,18 +120,19 @@ export default function Home() {
       <header className="mb-8">
         <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
           <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
-          Executive Treasury Console
+          Emergency Board Meeting
         </div>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
-          Project Prism — Cash-Flow Stress-Testing Engine
+          Payroll may fail in {company.payrollDueInDays} days. The boardroom has
+          been called.
         </h1>
         <p className="mt-3 max-w-2xl font-normal text-neutral-500">
-          Detect the crunch early, convene an AI boardroom, and stress-test each
-          mitigation pathway against deterministic treasury logic.
+          Project Prism stress-tests the choices in front of the owner. The
+          numbers come from the simulation; the agents explain the trade-offs.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
           <span>
-            Profile:{" "}
+            Business:{" "}
             <span className="font-medium text-neutral-900">
               {company.companyName}
             </span>
@@ -137,7 +141,7 @@ export default function Home() {
             onClick={() => setView("setup")}
             className="rounded-lg border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:border-neutral-300"
           >
-            Edit Company Profile
+            Edit Business Details
           </button>
         </div>
       </header>
@@ -147,15 +151,15 @@ export default function Home() {
         <section className="mb-12 rounded-2xl bg-neutral-900 p-6 text-white shadow-md sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/70">
-                <span aria-hidden>🚨</span> Emergency Board Meeting Required
+              <div className="text-xs font-semibold uppercase tracking-widest text-white/70">
+                Emergency Board Meeting Required
               </div>
               <p className="mt-2 text-lg font-semibold tracking-tight sm:text-xl">
-                Payroll risk detected in {company.payrollDueInDays} days.
+                Payroll may fail in {company.payrollDueInDays} days.
               </p>
               <p className="mt-2 text-sm text-neutral-300">
-                The Board of Directors is standing by. Convene the boardroom
-                immediately to stress-test corporate mitigation pathways.
+                The boardroom has been called. Review the cash-flow stress test
+                before choosing what to do next.
               </p>
             </div>
             <button
@@ -176,7 +180,7 @@ export default function Home() {
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-neutral-500">
-                Treasury Position Stable
+                Cash Position Stable
               </div>
               <p className="mt-2 text-lg font-semibold tracking-tight text-neutral-900 sm:text-xl">
                 No payroll risk detected for {company.companyName}.
@@ -213,9 +217,9 @@ export default function Home() {
         />
         <MetricCard
           label="Runway Days"
-          value={`${Math.round(health.runwayDays)} days`}
+          value={days(health.runwayDays)}
           sublabel="At current burn rate"
-          afterValue={after ? `${Math.round(after.runwayDays)} days` : undefined}
+          afterValue={after ? days(after.runwayDays) : undefined}
           improved={after ? after.runwayDays > health.runwayDays : false}
         />
         <MetricCard
@@ -243,9 +247,8 @@ export default function Home() {
               The Boardroom
             </h2>
             <p className="max-w-xl text-sm text-neutral-500">
-              Two specialised AI agents reason sequentially over the same
-              financial state — the CFO analyses liquidity first, then the
-              Collections Manager reads the CFO&apos;s stance and responds.
+              The CFO protects payroll first. The Collections Manager pushes
+              back from the receivables side. Then the owner decides.
             </p>
           </div>
           {/* The primary Convene CTA lives in the crisis command above; here we
@@ -276,7 +279,7 @@ export default function Home() {
 
         {boardStatus !== "idle" && (
           <div className="space-y-4">
-            {/* Live orchestration console — the state trace of the API loop. */}
+            {/* Live boardroom thinking trace. */}
             <OrchestrationConsole
               logs={logs}
               phase={phase}
@@ -297,9 +300,19 @@ export default function Home() {
 
             {/* Agent cards — revealed progressively as they arrive. */}
             {board.length > 0 && (
-              <div className="grid gap-4 lg:grid-cols-2">
-                {board.map((agent) => (
-                  <AgentCard key={agent.agent} agent={agent} />
+              <div className="mx-auto max-w-3xl space-y-3">
+                {board.map((agent, index) => (
+                  <div key={agent.agent}>
+                    <AgentCard agent={agent} />
+                    {index === 0 && board.length > 1 && (
+                      <div
+                        className="flex justify-center py-1 text-lg text-neutral-300"
+                        aria-hidden
+                      >
+                        ↓
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -314,7 +327,7 @@ export default function Home() {
             Your Decision
           </h2>
           <p className="text-sm text-neutral-500">
-            Tune the parameters, then choose a strategy. The simulation engine
+            Choose your assumptions, then choose a response. The simulation
             updates the numbers immediately — the AI never invents the outcome.
           </p>
         </div>
@@ -354,8 +367,8 @@ export default function Home() {
             />
             <ComparisonRow
               label="Runway"
-              before={`${Math.round(result.before.runwayDays)} days`}
-              after={`${Math.round(result.after.runwayDays)} days`}
+              before={days(result.before.runwayDays)}
+              after={days(result.after.runwayDays)}
               improved={result.after.runwayDays > result.before.runwayDays}
             />
             <ComparisonRow

@@ -24,9 +24,18 @@ import { checkFinancialHealth } from "@/lib/healthCheck";
 // deterministic projectedCashBeforePayroll from checkFinancialHealth().
 function projectSeries(state: FinancialState): number[] {
   const health = checkFinancialHealth(state);
-  const startCash = state.cashBalance + health.expectedCollections;
-  const dailyBurn = state.monthlyOpex / 30;
-  const days = state.payrollDueInDays;
+  const cashBalance = Number.isFinite(state.cashBalance)
+    ? Math.max(0, state.cashBalance)
+    : 0;
+  const monthlyOpex = Number.isFinite(state.monthlyOpex)
+    ? Math.max(0, state.monthlyOpex)
+    : 0;
+  const startCash = cashBalance + health.expectedCollections;
+  const dailyBurn = monthlyOpex / 30;
+  const days =
+    Number.isFinite(state.payrollDueInDays) && state.payrollDueInDays > 0
+      ? Math.round(state.payrollDueInDays)
+      : 1;
   const series: number[] = [];
   for (let day = 0; day <= days; day++) {
     series.push(Math.round(startCash - dailyBurn * day));
@@ -43,14 +52,16 @@ export default function CashFlowChart({
   current,
   simulated,
 }: CashFlowChartProps) {
-  const payrollAmount = current.payrollAmount;
+  const payrollAmount = Number.isFinite(current.payrollAmount)
+    ? Math.max(0, current.payrollAmount)
+    : 0;
   const beforeSeries = projectSeries(current);
   const afterSeries = simulated ? projectSeries(simulated) : null;
 
   const data = beforeSeries.map((before, day) => ({
     day: `Day ${day}`,
     before,
-    ...(afterSeries ? { after: afterSeries[day] } : {}),
+    ...(afterSeries ? { after: afterSeries[day] ?? afterSeries.at(-1) ?? 0 } : {}),
   }));
 
   return (

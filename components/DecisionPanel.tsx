@@ -1,5 +1,5 @@
 // The owner's decision buttons. Options are built dynamically from the live
-// financial state + decision parameters (getDecisionOptions), so labels and
+// business situation + decision assumptions (getDecisionOptions), so labels and
 // figures always match what the simulation will actually execute.
 
 import type { DecisionAction, DecisionOption } from "@/lib/simulation";

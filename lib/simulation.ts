@@ -1,11 +1,11 @@
 // Deterministic decision simulation.
 // Given the current state, a chosen action, and (optionally) user-customized
-// decision parameters, produce a new state plus before/after health snapshots
+// decision assumptions, produce a new state plus before/after health snapshots
 // so the dashboard can show the impact.
 //
 // When no parameters are supplied, defaultDecisionParameters() derives them
 // from the financial state using ratios calibrated to the MASTER_SPEC sample —
-// so the classic Prism Cafe Supplies scenario still yields exactly RM9,000 /
+// so the classic Harbour Coffee Roasters scenario still yields exactly RM9,000 /
 // RM7,000 / RM6,200, with zero regression.
 
 import type { FinancialState, Invoice } from "./financialState";

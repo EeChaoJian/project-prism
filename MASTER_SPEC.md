@@ -163,7 +163,7 @@ Use a hardcoded company.
 
 Company name:
 
-Prism Cafe Supplies
+Harbour Coffee Roasters
 
 Business type:
 
@@ -172,7 +172,7 @@ Small B2B supplier serving cafes and restaurants.
 Initial state:
 
 export const initialFinancialState = {
-  companyName: "Prism Cafe Supplies",
+  companyName: "Harbour Coffee Roasters",
   cashBalance: 12000,
   monthlyRevenue: 38000,
   monthlyOpex: 26000,
@@ -363,7 +363,7 @@ If the API fails, show fallback hardcoded agent responses so the demo never brea
 
 Before calling each agent, pass this context:
 
-Company: Prism Cafe Supplies
+Company: Harbour Coffee Roasters
 Cash balance: RM12,000
 Monthly revenue: RM38,000
 Monthly operating expenses: RM26,000

@@ -1,33 +1,56 @@
 # Project Prism
 
-**Explore financial decisions before you make them.**
+**AI Boardroom for SME cash-flow decisions.**
 
-Project Prism is an AI-powered financial *decision simulator* for small and
-medium-sized businesses. Instead of predicting the future, it lets an SME owner
-explore **"what happens if I make this decision?"** by simulating the impact on
-cash, runway, and payroll risk.
+Project Prism turns a payroll crisis into a boardroom decision: two AI agents
+argue the trade-off, then a deterministic simulation shows what the owner's
+choice does to cash, runway, and payroll risk.
 
 > Built for the AMD Developer Hackathon ACT II — Track 3 (Unicorn Track).
 
 ---
 
-## What it is
+## The problem
 
-**An AI Boardroom for SME financial decisions.**
+Small businesses often do not fail because revenue disappears. They fail
+because owners see the cash crunch too late and choose without understanding
+the effect on payroll, runway, and overdue invoices.
 
-- **The problem** — small businesses hit cash crunches like payroll without
-  seeing them coming, and make decisions without understanding the downstream
-  impact on cash, runway, and receivables.
-- **The demo (~2 min)** — a payroll risk is detected → a **CFO** and a
-  **Collections Manager** AI debate the trade-offs from opposing priorities →
-  the owner picks a strategy → a deterministic engine updates the numbers
-  instantly.
-- **Why it's credible** — the AI *explains the trade-offs*; every number comes
-  from testable TypeScript, never invented by the model.
+## The demo
+
+```
+Payroll alert
+    ↓
+AI boardroom
+    ↓
+Owner decision
+    ↓
+Simulation engine
+    ↓
+Updated cash position
+```
+
+The demo starts with an emergency board meeting. Payroll may fail in 18 days.
+The CFO argues for preserving cash. The Collections Manager disagrees and
+pushes receivables recovery. The owner chooses a response, and the simulation
+updates the numbers instantly.
+
+## Why AI
+
+The AI does not calculate the outcome. It explains the trade-off.
+
+The deterministic engine owns the math:
+
+```
+AI reasoning → Simulation engine → Updated cash
+```
+
+That split is the product's credibility: useful boardroom reasoning without
+letting the model invent financial numbers.
 
 ---
 
-## Current milestone: AI Boardroom MVP
+## Architecture
 
 This build pairs a **deterministic core** — the safety net for the whole demo —
 with a completed, live **sequential streaming multi-agent boardroom**. The CFO
@@ -43,7 +66,7 @@ schema-identical mock whenever a key is absent or a call fails.
 Risk detected → agents respond → owner chooses → simulation updates
 ```
 
-1. A hardcoded sample company (**Prism Cafe Supplies**) is loaded.
+1. A hardcoded sample company (**Harbour Coffee Roasters**) is loaded.
 2. `checkFinancialHealth()` detects a payroll cash crunch.
 3. The owner convenes the boardroom: two AI agents (**CFO**, then **Collections
    Manager**) reason **sequentially** over the same numbers.

@@ -50,13 +50,13 @@ export default function AgentCard({ agent }: { agent: AgentResponse }) {
         </div>
         <div>
           <div className="text-xs uppercase tracking-wider text-neutral-500">
-            Scenario Confidence
+            Confidence this protects payroll
           </div>
           <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-neutral-900">
             {scenarioConfidence}%
           </div>
           <div className="mt-0.5 text-[11px] text-neutral-400">
-            Based on current assumptions
+            Based on this scenario
           </div>
         </div>
       </div>

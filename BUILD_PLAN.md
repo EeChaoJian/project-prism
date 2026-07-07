@@ -10,7 +10,7 @@ call.
 
 Goal: a fully working demo with **no AI**. Every number is deterministic.
 
-- [x] Hardcoded sample financial state (`Prism Cafe Supplies`)
+- [x] Hardcoded sample financial state (`Harbour Coffee Roasters`)
 - [x] `checkFinancialHealth()` — expected collections, projected cash, payroll
       gap, runway, payroll-risk flag, alert message
 - [x] `simulateDecision()` — four owner actions with before/after snapshots

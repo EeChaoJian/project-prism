@@ -21,7 +21,7 @@ export interface FinancialState {
 }
 
 export const initialFinancialState: FinancialState = {
-  companyName: "Prism Cafe Supplies",
+  companyName: "Harbour Coffee Roasters",
   cashBalance: 12000,
   monthlyRevenue: 38000,
   monthlyOpex: 26000,
@@ -74,7 +74,7 @@ export interface LookalikeCohort {
   };
 }
 
-// Synthetic cohort of 147 retail / F&B suppliers sharing Prism Cafe Supplies'
+// Synthetic cohort of 147 retail / F&B suppliers sharing Harbour Coffee Roasters'
 // demo risk profile: sub-20-day runway, a payroll gap over RM4,000, and highly
 // concentrated overdue receivables.
 export const lookalikeCohortData: LookalikeCohort = {

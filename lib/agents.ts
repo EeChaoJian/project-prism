@@ -42,8 +42,8 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
   const cfo: AgentResponse = {
     agent: "CFO",
     role: "Liquidity, payroll, and runway.",
-    headline: "Delay equipment. Payroll comes first.",
-    recommendation: "I recommend delaying the equipment purchase to protect payroll.",
+    headline: "I am uncomfortable risking payroll for a discretionary purchase.",
+    recommendation: "Delay the equipment purchase and protect payroll first.",
     reasoning: [
       `Cash is ${rm(state.cashBalance)}; payroll is ${rm(
         state.payrollAmount
@@ -74,7 +74,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
     ? {
         agent: "Collections Manager",
         role: "Receivables and overdue invoices.",
-        headline: `Chase ${targetName}. Don't freeze growth.`,
+        headline: "I think we are being too conservative.",
         recommendation: `I disagree. Prioritize ${targetName} before freezing operations.`,
         reasoning: [
           `${targetName} carries ${targetPct}% settlement confidence on its ${rm(

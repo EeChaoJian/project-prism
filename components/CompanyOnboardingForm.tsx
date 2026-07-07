@@ -5,7 +5,7 @@
 // Captures live business metrics and compiles them into the FinancialState
 // consumed by the deterministic engine. Field values are held as strings while
 // editing (so inputs can be cleared) and validated into numbers on submit.
-// "Use Sample Data" restores the classic Prism Cafe Supplies payroll-crisis
+// "Use Sample Data" restores the classic Harbour Coffee Roasters payroll-crisis
 // scenario; "Clear Form" empties everything for a real business profile.
 
 import { useState } from "react";
@@ -203,17 +203,17 @@ export default function CompanyOnboardingForm({
         </div>
       </div>
 
-      {/* Company metrics */}
+      {/* Business metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="sm:col-span-2 lg:col-span-1">
           <label htmlFor="companyName" className={LABEL}>
-            Company Name
+            Business Name
           </label>
           <input
             id="companyName"
             type="text"
             className={INPUT}
-            placeholder="Prism Cafe Supplies"
+            placeholder="Harbour Coffee Roasters"
             value={draft.companyName}
             onChange={(e) => setField({ companyName: e.target.value })}
           />

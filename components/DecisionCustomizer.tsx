@@ -30,11 +30,11 @@ export default function DecisionCustomizer({
     <div className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm transition-all duration-200">
       <div className="mb-4">
         <h3 className="text-sm font-semibold tracking-tight text-neutral-900">
-          Decision Assumptions
+          Your Options
         </h3>
         <p className="text-xs text-neutral-500">
-          Choose the assumptions behind each response. The simulation and
-          decision cards update from these values.
+          Choose what feels realistic today. The simulation and decision cards
+          update from these values.
         </p>
       </div>
 

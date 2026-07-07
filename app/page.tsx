@@ -39,7 +39,7 @@ type View = "setup" | "boardroom";
 
 export default function Home() {
   // ---- Centralized dashboard state ---------------------------------------
-  // The company profile and decision parameters are the single source of
+  // Today's business situation and assumptions are the single source of
   // truth: metric cards, agent context, decision options, the chart, and
   // simulateDecision() all derive from them.
   const [view, setView] = useState<View>("setup");
@@ -94,17 +94,21 @@ export default function Home() {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <header className="mb-8">
-          <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
+          <div className="text-4xl font-semibold text-neutral-900" aria-hidden>
+            !
+          </div>
+          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-neutral-500">
             <span className="inline-block h-2 w-2 rounded-full bg-neutral-900" />
             Emergency Board Meeting
           </div>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
             {health.payrollRisk
-              ? `Payroll may fail in ${company.payrollDueInDays} days. The boardroom has been called.`
+              ? `Payroll may fail in ${company.payrollDueInDays} days.`
               : "Prepare the board before payroll is due."}
           </h1>
           <p className="mt-3 max-w-2xl font-normal text-neutral-500">
-            Let&apos;s understand your business before we convene the board.
+            The executive team is waiting. Before we begin, tell us about your
+            business.
           </p>
         </header>
 
@@ -141,7 +145,7 @@ export default function Home() {
             onClick={() => setView("setup")}
             className="rounded-lg border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:border-neutral-300"
           >
-            Edit Business Details
+            Edit Today&apos;s Situation
           </button>
         </div>
       </header>
@@ -273,7 +277,7 @@ export default function Home() {
               Convene Boardroom
             </span>{" "}
             to generate the CFO and Collections Manager analysis for{" "}
-            {company.companyName}&apos;s current financial state.
+            {company.companyName}&apos;s situation today.
           </div>
         )}
 
@@ -339,7 +343,7 @@ export default function Home() {
           </p>
           <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-xs leading-relaxed text-neutral-500">
             <span className="font-medium text-neutral-700">
-              Simulation assumptions:
+              Today&apos;s situation:
             </span>{" "}
             Equipment purchase scheduled next week ({rm(company.equipmentPurchase)})
             · Payroll due in {company.payrollDueInDays} days · Operating expenses
@@ -365,6 +369,10 @@ export default function Home() {
         <section className={`mb-12 p-6 ${CARD}`}>
           <div className="text-xs uppercase tracking-wider text-neutral-500">
             Simulated Decision
+          </div>
+          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-600">
+            <span className="text-neutral-900">✓</span>
+            Deterministic simulation complete
           </div>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
             {result.label}

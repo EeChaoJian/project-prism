@@ -54,7 +54,7 @@ function buildContext(state: FinancialState, health: FinancialHealth): string {
     .join("\n");
 
   return [
-    `Company: ${state.companyName}`,
+    `Business: ${state.companyName}`,
     `Cash balance: ${rm(state.cashBalance)}`,
     `Monthly revenue: ${rm(state.monthlyRevenue)}`,
     `Monthly operating expenses: ${rm(state.monthlyOpex)}`,
@@ -124,7 +124,7 @@ Set scenarioConfidence to ${payrollCoverageConfidence(
     "delay_equipment"
   ).toFixed(2)}. This is the deterministic confidence that your recommendation protects payroll.
 ${cohortCfoNote(state)}
-Write short, natural sentences fit for an urgent 3-minute board overview.
+Write short, natural sentences fit for an urgent 3-minute board overview. Sound like an executive with something at stake, not a chatbot.
 ${SCHEMA_INSTRUCTION}`;
 
 const collectionsSystem = (state: FinancialState) => {
@@ -134,7 +134,7 @@ const collectionsSystem = (state: FinancialState) => {
 There are no outstanding invoices. Do not invent a receivables recovery path.
 Your recommendation must state that collections cannot solve this scenario.
 Set scenarioConfidence to 0.
-Write short, natural sentences fit for an urgent 3-minute board overview.
+Write short, natural sentences fit for an urgent 3-minute board overview. Sound like an executive with something at stake, not a chatbot.
 ${SCHEMA_INSTRUCTION}`;
   }
   const targetName = target?.client ?? "the largest overdue account";
@@ -148,7 +148,7 @@ Set scenarioConfidence to ${payrollCoverageConfidence(
     "prioritize_alpha"
   ).toFixed(2)}. This is the deterministic confidence that your recommendation protects payroll.
 ${COHORT_COLLECTIONS}
-Write short, natural sentences fit for an urgent 3-minute board overview.
+Write short, natural sentences fit for an urgent 3-minute board overview. Sound like an executive with something at stake, not a chatbot.
 ${SCHEMA_INSTRUCTION}`;
 };
 

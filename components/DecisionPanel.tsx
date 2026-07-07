@@ -1,17 +1,23 @@
-// The owner's decision buttons. Clicking a button runs a deterministic
-// simulation in the parent, which then renders the before/after result.
+// The owner's decision buttons. Options are built dynamically from the live
+// financial state + decision parameters (getDecisionOptions), so labels and
+// figures always match what the simulation will actually execute.
 
-import { decisionOptions, type DecisionAction } from "@/lib/simulation";
+import type { DecisionAction, DecisionOption } from "@/lib/simulation";
 
 interface DecisionPanelProps {
+  options: DecisionOption[];
   onDecide: (action: DecisionAction) => void;
   selected: DecisionAction | null;
 }
 
-export default function DecisionPanel({ onDecide, selected }: DecisionPanelProps) {
+export default function DecisionPanel({
+  options,
+  onDecide,
+  selected,
+}: DecisionPanelProps) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {decisionOptions.map((option) => {
+      {options.map((option) => {
         const isSelected = selected === option.action;
         return (
           <button

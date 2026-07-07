@@ -6,7 +6,7 @@
 // number is derived from the deterministic health check, so the fallback stays
 // internally consistent with the dashboard.
 
-import type { FinancialState } from "./financialState";
+import type { FinancialState, Invoice } from "./financialState";
 import { checkFinancialHealth } from "./healthCheck";
 
 export interface AgentPredictiveMetrics {
@@ -68,24 +68,35 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
   };
 
   // ---- Collections — receivables recovery assumptions ------------------
+  // Target the largest outstanding receivable in whatever state was supplied,
+  // so custom company profiles get coherent fallback narratives too.
   const totalReceivables = state.invoices.reduce((sum, i) => sum + i.amount, 0);
-  const alpha = state.invoices.find((i) => i.client === "Client Alpha");
-  const alphaExpected = alpha ? alpha.amount * alpha.collectionProbability : 0;
+  const target = state.invoices.reduce<Invoice | undefined>(
+    (top, inv) => (!top || inv.amount > top.amount ? inv : top),
+    undefined
+  );
+  const targetName = target?.client ?? "the top receivable";
+  const targetPct = Math.round((target?.collectionProbability ?? 0) * 100);
+  const targetExpected = target
+    ? target.amount * target.collectionProbability
+    : 0;
   const collProbability = clamp01(
     totalReceivables > 0 ? health.expectedCollections / totalReceivables : 0
   );
-  const collAdjRunway = round1((state.cashBalance + alphaExpected) / dailyBurn);
+  const collAdjRunway = round1(
+    (state.cashBalance + targetExpected) / dailyBurn
+  );
   const collRiskScore = Math.round((1 - collProbability) * 100);
 
   const collections: AgentResponse = {
     agent: "Collections Manager",
     role: "Risk Operations Manager — receivables recovery assumptions and collection aging models.",
-    headline: "Chase Client Alpha. Don't freeze growth.",
+    headline: `Chase ${targetName}. Don't freeze growth.`,
     position: `The CFO's freeze protects cash but stalls operations for a full month. We solve this by collecting, not cutting.`,
-    recommendedAction: "Prioritize Client Alpha.",
+    recommendedAction: `Prioritize ${targetName}.`,
     reasoning: [
-      `Client Alpha carries 80% scenario confidence on its ${rm(
-        alpha?.amount ?? 0
+      `${targetName} carries ${targetPct}% scenario confidence on its ${rm(
+        target?.amount ?? 0
       )} outstanding balance — a reliable near-term influx.`,
       `Under a standard age-of-receivables aging model, that recovery lands fast enough to cover payroll.`,
       `Freezing the ${rm(
@@ -96,7 +107,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
       health.expectedCollections
     )} expected of ${rm(
       totalReceivables
-    )} outstanding; Client Alpha modelled at 80% settlement.`,
+    )} outstanding; ${targetName} modelled at ${targetPct}% settlement.`,
     predictiveMetrics: {
       adjustedRunwayDays: collAdjRunway,
       probabilityOfSuccess: collProbability,

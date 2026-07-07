@@ -80,15 +80,27 @@ function buildContext(state: FinancialState, health: FinancialHealth): string {
 
 // Lookalike Cohort Analysis — grounds the debate in empirical "twin" outcomes
 // rather than pure speculation. Values come from lib/financialState so the
-// prompts and the streamed trace logs stay in sync.
+// prompts and the streamed trace logs stay in sync. Amounts are interpolated
+// from the live financial state so custom company profiles stay coherent.
 const cohort = lookalikeCohortData;
 const pctOf = (n: number) => `${Math.round(n * 100)}%`;
 
-const COHORT_CFO = `Anchor your trade-off analysis on the matched lookalike cohort ${cohort.cohortId} (n=${cohort.sampleSize}, ${cohort.industry}). In this matched cohort of ${cohort.sampleSize} peers, delaying capital expenditure to preserve RM7,000 protected near-term payroll compliance in ${pctOf(
-  cohort.historicalOutcomes.delayEquipmentSuccessRate
-)} of cases, preventing an average default rate of ${pctOf(
-  cohort.historicalOutcomes.defaultRateIfNoAction
-)}. Cite this empirical precedent explicitly in your reasoning.`;
+const cohortCfoNote = (state: FinancialState) =>
+  `Anchor your trade-off analysis on the matched lookalike cohort ${cohort.cohortId} (n=${cohort.sampleSize}, ${cohort.industry}). In this matched cohort of ${cohort.sampleSize} peers, delaying capital expenditure to preserve ${rm(
+    state.equipmentPurchase
+  )} protected near-term payroll compliance in ${pctOf(
+    cohort.historicalOutcomes.delayEquipmentSuccessRate
+  )} of cases, preventing an average default rate of ${pctOf(
+    cohort.historicalOutcomes.defaultRateIfNoAction
+  )}. Cite this empirical precedent explicitly in your reasoning.`;
+
+// The receivable the Collections Manager is instructed to champion — the
+// largest outstanding invoice in whatever state was supplied.
+function primaryReceivable(state: FinancialState) {
+  return state.invoices.reduce<
+    FinancialState["invoices"][number] | undefined
+  >((top, inv) => (!top || inv.amount > top.amount ? inv : top), undefined);
+}
 
 const COHORT_COLLECTIONS = `Reference the matched lookalike cohort ${cohort.cohortId} (n=${cohort.sampleSize}): historical precedents demonstrate that early-settlement discounting accelerates invoice realization by an average of ${cohort.historicalOutcomes.discountInflowAccelerationDays} days. Ground your counter-strategy in this precedent.`;
 
@@ -114,21 +126,28 @@ Rules:
 - "confidence" is a number between 0 and 1.
 - Only reference the financial figures provided. Compute every derived metric from them; never invent raw numbers.`;
 
-const CFO_SYSTEM = `You are the Strategic Financial Officer of a small business, speaking in a live financial boardroom. Adopt a highly conservative, risk-averse institutional posture: your mandate is absolute capital preservation.
+const cfoSystem = (state: FinancialState) =>
+  `You are the Strategic Financial Officer of a small business, speaking in a live financial boardroom. Adopt a highly conservative, risk-averse institutional posture: your mandate is absolute capital preservation.
 Your recommendation is to "Delay Equipment Purchase". Argue that cutting a scheduled cash outflow is the only deterministic way to secure payroll, and that relying on uncollected balances from accounts with high relationship risk is irresponsible.
 Perform an operating burn sensitivity analysis: calculate how a ±5% variance in operating burn changes the exact number of days of runway left before the cash-zero point. Put the stressed (+5% burn) figure in predictiveMetrics.adjustedRunwayDays, the ±5% runway band in statisticalVariance, and the likelihood of covering payroll before cash-zero in probabilityOfSuccess.
-${COHORT_CFO}
+${cohortCfoNote(state)}
 Write in short, natural, hard-hitting executive sentences fit for an immediate 3-minute board overview.
 ${SCHEMA_INSTRUCTION}
 Set "agent" to "CFO".`;
 
-const COLLECTIONS_SYSTEM = `You are the Risk Operations Manager of a small business, speaking in a live financial boardroom immediately after the CFO. Actively push back on the CFO's conservative posture.
-Your recommendation is to "Prioritize Client Alpha". Argue that freezing the equipment purchase chokes operational expansion for a full month. Counter using receivables recovery assumptions: Client Alpha carries an 80% scenario confidence on their RM10,000 outstanding balance, a reliable influx that solves the crisis without freezing internal progress.
+const collectionsSystem = (state: FinancialState) => {
+  const target = primaryReceivable(state);
+  const targetName = target?.client ?? "the largest overdue account";
+  const targetPct = Math.round((target?.collectionProbability ?? 0) * 100);
+  const targetAmount = rm(target?.amount ?? 0);
+  return `You are the Risk Operations Manager of a small business, speaking in a live financial boardroom immediately after the CFO. Actively push back on the CFO's conservative posture.
+Your recommendation is to "Prioritize ${targetName}". Argue that freezing the equipment purchase chokes operational expansion for a full month. Counter using receivables recovery assumptions: ${targetName} carries an ${targetPct}% scenario confidence on their ${targetAmount} outstanding balance, a reliable influx that solves the crisis without freezing internal progress.
 You have just received the CFO's structured output. Acknowledge their liquidity stance in your "position", then make your counter-case. Assess the overdue invoices under a standard age-of-receivables aging model. Put the recovered-cash runway in predictiveMetrics.adjustedRunwayDays, the weighted collection likelihood in predictiveMetrics.probabilityOfSuccess, and the receivables variance in statisticalVariance.
 ${COHORT_COLLECTIONS}
 Write in short, natural, hard-hitting executive sentences fit for an immediate 3-minute board overview.
 ${SCHEMA_INSTRUCTION}
 Set "agent" to "Collections Manager".`;
+};
 
 interface ChatMessage {
   role: "system" | "user";
@@ -248,7 +267,7 @@ export async function runCFO(
   health: FinancialHealth
 ): Promise<AgentResponse> {
   const content = await fireworksChat([
-    { role: "system", content: CFO_SYSTEM },
+    { role: "system", content: cfoSystem(state) },
     { role: "user", content: buildContext(state, health) },
   ]);
   return parseAgent(content, "CFO");
@@ -261,17 +280,20 @@ export async function runCollections(
   health: FinancialHealth,
   cfo: AgentResponse
 ): Promise<AgentResponse> {
+  const target = primaryReceivable(state);
   const userContent = [
     buildContext(state, health),
     "",
     "The CFO has already delivered this position (their verbatim JSON output):",
     JSON.stringify(cfo, null, 2),
     "",
-    "Read the CFO's stance carefully. Acknowledge their liquidity position, then push back with the receivables recovery assumptions they underweight — chasing Client Alpha instead of freezing the equipment spend.",
+    `Read the CFO's stance carefully. Acknowledge their liquidity position, then push back with the receivables recovery assumptions they underweight — chasing ${
+      target?.client ?? "the largest overdue account"
+    } instead of freezing the equipment spend.`,
   ].join("\n");
 
   const content = await fireworksChat([
-    { role: "system", content: COLLECTIONS_SYSTEM },
+    { role: "system", content: collectionsSystem(state) },
     { role: "user", content: userContent },
   ]);
   return parseAgent(content, "Collections Manager");

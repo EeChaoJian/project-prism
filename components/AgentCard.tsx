@@ -61,7 +61,7 @@ export default function AgentCard({ agent }: { agent: AgentResponse }) {
             {confidenceLabel}
           </div>
           <div className="mt-0.5 text-[11px] text-neutral-400">
-            Based on current assumptions
+            Payroll protection under current assumptions
           </div>
         </div>
       </div>

@@ -38,6 +38,9 @@ The CFO argues for preserving cash. The Collections Manager disagrees and
 pushes receivables recovery. The owner chooses a response, and the simulation
 updates the numbers instantly.
 
+Payroll is today's scenario. The platform pattern can extend to pricing,
+hiring, expansion, funding, and other high-stakes SME decisions.
+
 ## Why AI
 
 The AI does not calculate the outcome. It explains the trade-off.

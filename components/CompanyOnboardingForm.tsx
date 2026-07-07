@@ -172,12 +172,14 @@ export default function CompanyOnboardingForm({
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
-            Welcome to Project Prism
+            Payroll may fail in 18 days.
           </h2>
           <p className="mt-1 max-w-xl text-sm text-neutral-500">
-            Before we convene the board, tell us about your business or load
-            the sample payroll-crisis scenario. Every boardroom number is
-            computed from today&apos;s situation.
+            Before we convene the emergency board meeting, review the sample
+            business below. Edit anything you&apos;d like.
+          </p>
+          <p className="mt-2 text-xs font-medium text-neutral-700">
+            Sample business loaded: Harbour Coffee Roasters.
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
@@ -189,7 +191,7 @@ export default function CompanyOnboardingForm({
             }}
             className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300"
           >
-            Use Sample Data
+            Reload Sample
           </button>
           <button
             type="button"

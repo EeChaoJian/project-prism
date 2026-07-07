@@ -107,8 +107,8 @@ export default function Home() {
               : "Prepare the board before payroll is due."}
           </h1>
           <p className="mt-3 max-w-2xl font-normal text-neutral-500">
-            The executive team is waiting. Before we begin, tell us about your
-            business.
+            Before we convene the emergency board meeting, review the sample
+            business below. Edit anything you&apos;d like.
           </p>
         </header>
 
@@ -310,11 +310,13 @@ export default function Home() {
                   <div key={agent.agent}>
                     <AgentCard agent={agent} />
                     {index === 0 && board.length > 1 && (
-                      <div
-                        className="flex justify-center py-1 text-lg text-neutral-300"
-                        aria-hidden
-                      >
-                        ↓
+                      <div className="flex flex-col items-center py-2">
+                        <div className="text-lg text-neutral-300" aria-hidden>
+                          ↓
+                        </div>
+                        <div className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 shadow-sm">
+                          Collections Manager: I disagree.
+                        </div>
                       </div>
                     )}
                   </div>
@@ -377,7 +379,7 @@ export default function Home() {
           </div>
           <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-600">
             <span className="text-neutral-900">✓</span>
-            Deterministic simulation complete
+            Deterministic calculation complete
           </div>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
             {result.label}

@@ -56,9 +56,10 @@ export const initialFinancialState: FinancialState = {
 // ---------------------------------------------------------------------------
 // Synthetic Demo Benchmark Data
 //
-// This hardcoded cohort is illustrative benchmark data for the hackathon demo.
-// It is not live market data and should not be presented as verified evidence.
-// The boardroom can cite it only as a synthetic comparison point.
+// This hardcoded cohort is illustrative benchmark data included purely to
+// demonstrate the interface. It is not live market data, not sourced from any
+// registry, and must never be presented as verified evidence — the boardroom
+// cites it only as a synthetic comparison point.
 // ---------------------------------------------------------------------------
 
 export interface LookalikeCohort {

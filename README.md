@@ -11,6 +11,22 @@ cash, runway, and payroll risk.
 
 ---
 
+## What it is
+
+**An AI Boardroom for SME financial decisions.**
+
+- **The problem** — small businesses hit cash crunches like payroll without
+  seeing them coming, and make decisions without understanding the downstream
+  impact on cash, runway, and receivables.
+- **The demo (~2 min)** — a payroll risk is detected → a **CFO** and a
+  **Collections Manager** AI debate the trade-offs from opposing priorities →
+  the owner picks a strategy → a deterministic engine updates the numbers
+  instantly.
+- **Why it's credible** — the AI *explains the trade-offs*; every number comes
+  from testable TypeScript, never invented by the model.
+
+---
+
 ## Current milestone: AI Boardroom MVP
 
 This build pairs a **deterministic core** — the safety net for the whole demo —

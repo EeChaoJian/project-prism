@@ -118,7 +118,9 @@ export async function POST(req: Request) {
         )}.`
       );
       // Synthetic benchmark context for the demo. This is not live market data.
-      await log("[BOARDROOM]: Reviewing synthetic demo benchmark data...");
+      await log(
+        "[BOARDROOM]: Reviewing synthetic benchmark data (illustrative demo only)..."
+      );
       await log(
         "[BOARDROOM]: Comparing this scenario with a synthetic SME cash-flow cohort..."
       );

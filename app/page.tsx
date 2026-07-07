@@ -316,6 +316,13 @@ export default function Home() {
                 ))}
               </div>
             )}
+
+            {/* Handoff to the owner. */}
+            {boardStatus === "done" && board.length > 1 && (
+              <p className="pt-1 text-center text-sm font-medium text-neutral-900">
+                The board has weighed in. The decision is yours.
+              </p>
+            )}
           </div>
         )}
       </section>
@@ -330,6 +337,14 @@ export default function Home() {
             Choose your assumptions, then choose a response. The simulation
             updates the numbers immediately — the AI never invents the outcome.
           </p>
+          <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-xs leading-relaxed text-neutral-500">
+            <span className="font-medium text-neutral-700">
+              Simulation assumptions:
+            </span>{" "}
+            Equipment purchase scheduled next week ({rm(company.equipmentPurchase)})
+            · Payroll due in {company.payrollDueInDays} days · Operating expenses
+            accrue daily.
+          </div>
         </div>
         <div className="space-y-4">
           <DecisionCustomizer
@@ -378,6 +393,11 @@ export default function Home() {
               improved={!result.after.payrollRisk && result.before.payrollRisk}
             />
           </div>
+
+          {/* Resolution beat — the outcome, stated from the real deltas. */}
+          <div className="mt-6 rounded-xl bg-neutral-900 p-4 text-sm font-medium text-white">
+            {boardOutcome(company.cashBalance, result)}
+          </div>
         </section>
       )}
 
@@ -392,6 +412,25 @@ export default function Home() {
       </footer>
     </main>
   );
+}
+
+// The resolution line — honest about whether the crunch was actually solved.
+function boardOutcome(companyCash: number, result: SimulationResult): string {
+  const cashUp = result.updatedState.cashBalance - companyCash;
+  const runwayUp = Math.round(result.after.runwayDays - result.before.runwayDays);
+  if (cashUp === 0) {
+    return "No action taken — payroll risk remains and the board is still exposed.";
+  }
+  if (!result.after.payrollRisk && result.before.payrollRisk) {
+    return `Payroll secured. Runway extended to ${Math.round(
+      result.after.runwayDays
+    )} days.`;
+  }
+  return `Cash up RM${Math.round(
+    cashUp
+  ).toLocaleString()} · runway +${runwayUp} days · payroll gap now RM${Math.round(
+    result.after.payrollGap
+  ).toLocaleString()} — narrowed, still exposed.`;
 }
 
 function SourceBadge({ source }: { source: BoardSource | null }) {

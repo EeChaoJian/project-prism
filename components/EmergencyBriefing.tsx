@@ -105,7 +105,7 @@ export default function EmergencyBriefing({
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <button
             onClick={onEnter}
-            className="rounded-xl bg-white px-6 py-3 text-base font-semibold text-neutral-900 shadow-sm transition-colors hover:bg-neutral-100"
+            className="rounded-xl bg-white px-6 py-3 text-base font-semibold text-neutral-900 shadow-sm transition-all hover:bg-neutral-100 active:scale-[0.98]"
           >
             Enter Boardroom →
           </button>

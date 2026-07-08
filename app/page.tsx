@@ -10,11 +10,14 @@ import CashFlowChart from "@/components/CashFlowChart";
 import BoardroomStatus from "@/components/BoardroomStatus";
 import OrchestrationConsole from "@/components/OrchestrationConsole";
 import CompanyOnboardingForm from "@/components/CompanyOnboardingForm";
+import EmergencyBriefing from "@/components/EmergencyBriefing";
+import RiskBadge from "@/components/RiskBadge";
 import {
   initialFinancialState,
   type FinancialState,
 } from "@/lib/financialState";
 import { checkFinancialHealth } from "@/lib/healthCheck";
+import { riskLevel } from "@/lib/risk";
 import { useBoardroom } from "@/lib/useBoardroom";
 import { BOARDROOM_STEPS, type BoardSource } from "@/lib/boardroom";
 import {
@@ -38,14 +41,14 @@ const CARD =
 const PRIMARY_BUTTON =
   "bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl px-5 py-2.5 transition-colors shadow-sm";
 
-type View = "setup" | "boardroom";
+type View = "briefing" | "setup" | "boardroom";
 
 export default function Home() {
   // ---- Centralized dashboard state ---------------------------------------
   // Today's business situation and assumptions are the single source of
   // truth: metric cards, agent context, decision options, the chart, and
   // simulateDecision() all derive from them.
-  const [view, setView] = useState<View>("setup");
+  const [view, setView] = useState<View>("briefing");
   const [company, setCompany] = useState<FinancialState>(initialFinancialState);
   const [params, setParams] = useState<DecisionParameters>(() =>
     defaultDecisionParameters(initialFinancialState)
@@ -80,6 +83,14 @@ export default function Home() {
     void convene(next);
   }
 
+  function handleEnterBoardroom() {
+    setResult(null);
+    setSelected(null);
+    reset();
+    setView("boardroom");
+    void convene(company);
+  }
+
   function handleDecide(action: DecisionAction) {
     setSelected(action);
     setResult(simulateDecision(company, action, params));
@@ -93,6 +104,20 @@ export default function Home() {
 
   const after = result?.after ?? null;
   const simulatedState = result?.updatedState ?? null;
+
+  // ---- Briefing view (landing) -------------------------------------------
+  if (view === "briefing") {
+    return (
+      <main className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
+        <EmergencyBriefing
+          company={company}
+          health={health}
+          onEnter={handleEnterBoardroom}
+          onEdit={() => setView("setup")}
+        />
+      </main>
+    );
+  }
 
   // ---- Setup view ---------------------------------------------------------
   if (view === "setup") {
@@ -126,8 +151,11 @@ export default function Home() {
     <main className="mx-auto max-w-6xl px-6 py-12">
       {/* Executive hero */}
       <header className="mb-8">
-        <div className="text-sm font-medium text-neutral-500">
-          Payroll Risk Detected
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-neutral-500">
+            {health.payrollRisk ? "Payroll Risk Detected" : "Cash Position Stable"}
+          </span>
+          <RiskBadge level={riskLevel(company, health)} />
         </div>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
           Payroll may fail in {company.payrollDueInDays} days. The boardroom has
@@ -397,6 +425,17 @@ export default function Home() {
           <p className="mt-2 max-w-2xl text-sm text-neutral-500">
             {result.explanation}
           </p>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <span className="text-xs uppercase tracking-wider text-neutral-500">
+              Risk Level
+            </span>
+            <RiskBadge level={riskLevel(company, result.before)} />
+            <span className="text-neutral-400" aria-hidden>
+              →
+            </span>
+            <RiskBadge level={riskLevel(result.updatedState, result.after)} />
+          </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <ComparisonRow

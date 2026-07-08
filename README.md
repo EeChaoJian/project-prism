@@ -33,10 +33,14 @@ Simulation engine
 Updated cash position
 ```
 
-The demo starts with an emergency board meeting. Payroll may fail in 18 days.
-The CFO argues for preserving cash. The Collections Manager disagrees and
-pushes receivables recovery. The owner chooses a response, and the simulation
-updates the numbers instantly.
+The demo opens on an **emergency briefing** — a crisis snapshot (cash, payroll
+countdown, receivables, survival runway, risk level) with one CTA: *Enter
+Boardroom*. Inside, two named executives weigh in: **Maya Chen (CFO)** argues
+for preserving cash; **Daniel Reyes (Collections Manager)** disagrees and pushes
+receivables recovery. A **Compare all options** table shows every action's
+payroll outcome, cash, and runway with the best one badged *Recommended*. The
+owner chooses, and the simulation updates the numbers — and the risk level —
+instantly.
 
 Payroll is today's scenario. The platform pattern can extend to pricing,
 hiring, expansion, funding, and other high-stakes SME decisions.

@@ -369,7 +369,7 @@ export default function Home() {
                           ↓
                         </div>
                         <div className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 shadow-sm">
-                          Collections Manager: I disagree.
+                          The board is split — Collections Manager pushes back.
                         </div>
                       </div>
                     )}
@@ -434,8 +434,13 @@ export default function Home() {
           key={result.action}
           className={`mb-12 p-6 ${CARD} animate-[rise_0.4s_ease-out]`}
         >
-          <div className="text-xs uppercase tracking-wider text-neutral-500">
-            Board Decision Executed
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs uppercase tracking-wider text-neutral-500">
+              Board Decision Executed
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600">
+              ✓ Deterministic simulation complete
+            </span>
           </div>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
             {result.label}

@@ -36,23 +36,18 @@ export default function EmergencyBriefing({
   onEdit,
 }: EmergencyBriefingProps) {
   const level = riskLevel(company, health);
-  const receivables = company.invoices.reduce((sum, i) => sum + i.amount, 0);
 
   const briefing = health.payrollRisk
-    ? `${company.companyName} holds ${rm(
-        company.cashBalance
-      )} in cash with payroll of ${rm(company.payrollAmount)} due in ${
-        company.payrollDueInDays
-      } days. Even with ${rm(
+    ? `Even with ${rm(
         health.expectedCollections
-      )} of expected collections, projected cash falls short by ${rm(
+      )} of expected collections, projected cash falls ${rm(
         health.payrollGap
-      )}. Your executive team has prepared competing recommendations.`
-    : `${company.companyName} holds ${rm(
-        company.cashBalance
-      )} in cash and is projected to cover payroll due in ${
+      )} short of the ${rm(company.payrollAmount)} payroll due in ${
         company.payrollDueInDays
-      } days. Convene the board to pressure-test the position before you commit.`;
+      } days.`
+    : `${company.companyName} is projected to cover the ${rm(
+        company.payrollAmount
+      )} payroll due in ${company.payrollDueInDays} days.`;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -62,7 +57,7 @@ export default function EmergencyBriefing({
           Project Prism
         </div>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
-          AI Boardroom for Business Survival
+          AI Boardroom for SME Financial Decisions
         </h1>
       </div>
 
@@ -86,9 +81,12 @@ export default function EmergencyBriefing({
             label="Payroll Due"
             value={`${company.payrollDueInDays} days`}
           />
-          <Metric label="Outstanding Receivables" value={rm(receivables)} />
           <Metric
-            label="Survival Runway"
+            label="Projected Shortfall"
+            value={health.payrollRisk ? rm(health.payrollGap) : "Covered"}
+          />
+          <Metric
+            label="Runway"
             value={`${Math.round(health.runwayDays)} days`}
           />
         </div>

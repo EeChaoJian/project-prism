@@ -72,9 +72,6 @@ export default function OrchestrationConsole({
           <ol className="space-y-1">
             {logs.map((line, i) => (
               <li key={i} className="whitespace-pre-wrap break-words">
-                <span className="mr-2 select-none text-neutral-300">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
                 <LogLine line={line} />
               </li>
             ))}
@@ -84,9 +81,6 @@ export default function OrchestrationConsole({
         {/* Blinking cursor while streaming (CSS-only, no timers → no leaks). */}
         {active && (
           <div className="mt-1 flex items-center gap-2">
-            <span className="select-none text-neutral-300">
-              {String(logs.length + 1).padStart(2, "0")}
-            </span>
             <span className="inline-block h-3.5 w-2 animate-pulse bg-neutral-800" />
           </div>
         )}

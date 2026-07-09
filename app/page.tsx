@@ -3,9 +3,9 @@
 import { useState } from "react";
 import MetricCard from "@/components/MetricCard";
 import AgentCard from "@/components/AgentCard";
-import DecisionPanel from "@/components/DecisionPanel";
 import DecisionCustomizer from "@/components/DecisionCustomizer";
 import OptionComparison from "@/components/OptionComparison";
+import CountUp from "@/components/CountUp";
 import CashFlowChart from "@/components/CashFlowChart";
 import BoardroomStatus from "@/components/BoardroomStatus";
 import OrchestrationConsole from "@/components/OrchestrationConsole";
@@ -22,7 +22,6 @@ import { useBoardroom } from "@/lib/useBoardroom";
 import { BOARDROOM_STEPS, type BoardSource } from "@/lib/boardroom";
 import {
   simulateDecision,
-  getDecisionOptions,
   defaultDecisionParameters,
   compareOptions,
   recommendedAction,
@@ -30,6 +29,30 @@ import {
   type DecisionParameters,
   type SimulationResult,
 } from "@/lib/simulation";
+
+// Which executive backs each response, and its honest downside — surfaced in
+// the result so the owner sees the full trade-off at the moment of decision.
+const DECISION_META: Record<
+  DecisionAction,
+  { supporter: string; downside: string }
+> = {
+  prioritize_alpha: {
+    supporter: "Daniel Reyes · Collections Manager",
+    downside: "Chasing aggressively may strain the client relationship.",
+  },
+  delay_equipment: {
+    supporter: "Maya Chen · CFO",
+    downside: "Postpones the operational upgrade the equipment enables.",
+  },
+  early_payment_discount: {
+    supporter: "Daniel Reyes · Collections Manager",
+    downside: "Sacrifices margin on the discounted invoices.",
+  },
+  do_nothing: {
+    supporter: "No executive backs inaction",
+    downside: "Payroll risk remains unaddressed.",
+  },
+};
 
 const safeNumber = (n: number) => (Number.isFinite(n) ? n : 0);
 const rm = (n: number) => `RM${Math.round(safeNumber(n)).toLocaleString()}`;
@@ -39,7 +62,7 @@ const days = (n: number) => `${Math.round(safeNumber(n)).toLocaleString()} days`
 const CARD =
   "bg-white rounded-2xl border border-neutral-200/80 shadow-sm transition-all duration-200";
 const PRIMARY_BUTTON =
-  "bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl px-5 py-2.5 transition-colors shadow-sm";
+  "bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl px-5 py-2.5 shadow-sm transition-all active:scale-[0.98]";
 
 type View = "briefing" | "setup" | "boardroom";
 
@@ -69,7 +92,6 @@ export default function Home() {
   } = useBoardroom();
 
   const health = checkFinancialHealth(company);
-  const options = getDecisionOptions(company, params);
   const outcomes = compareOptions(company, params);
   const recommended = recommendedAction(company, params);
 
@@ -190,17 +212,18 @@ export default function Home() {
                 Emergency Board Meeting Required
               </div>
               <p className="mt-2 text-lg font-semibold tracking-tight sm:text-xl">
-                Payroll may fail in {company.payrollDueInDays} days.
+                Projected cash falls short of payroll by{" "}
+                {rm(health.payrollGap)}.
               </p>
               <p className="mt-2 text-sm text-neutral-300">
-                The boardroom has been called. Review the cash-flow stress test
-                before choosing what to do next.
+                Convene your board to pressure-test the options before you
+                decide.
               </p>
             </div>
             <button
               onClick={() => convene(company)}
               disabled={boardStatus === "running"}
-              className="shrink-0 rounded-xl bg-white px-5 py-2.5 font-medium text-neutral-900 shadow-sm transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="shrink-0 rounded-xl bg-white px-5 py-2.5 font-medium text-neutral-900 shadow-sm transition-all hover:bg-neutral-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {boardStatus === "idle"
                 ? "Convene Boardroom"
@@ -365,59 +388,54 @@ export default function Home() {
         )}
       </section>
 
-      {/* Owner decision */}
+      {/* Owner decision — one surface: the comparison table commits the choice */}
       <section className="mb-12">
         <div className="mb-5">
           <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
             Your Decision
           </h2>
           <p className="text-sm text-neutral-500">
-            Choose your assumptions, then choose a response. The simulation
-            updates the numbers immediately — the AI never invents the outcome.
+            Pick the response with the outcome you want. The simulation updates
+            instantly — the AI explains the trade-off, it never invents the
+            numbers.
           </p>
-          <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-xs leading-relaxed text-neutral-500">
-            <span className="font-medium text-neutral-700">
-              Today&apos;s situation:
-            </span>{" "}
-            Equipment purchase scheduled next week ({rm(company.equipmentPurchase)})
-            · Payroll due in {company.payrollDueInDays} days · Operating expenses
-            accrue daily.
-            <div className="mt-2 border-t border-neutral-200 pt-2 text-[11px] text-neutral-500">
-              Financial inputs → deterministic simulation → updated metrics;
-              AI boardroom reasoning explains the trade-off.
-            </div>
-          </div>
         </div>
-        <div className="space-y-4">
-          <DecisionCustomizer
-            state={company}
-            params={params}
-            onChange={handleParamsChange}
-          />
+        <div className="space-y-3">
           <OptionComparison
             outcomes={outcomes}
             recommended={recommended}
             selected={selected}
             onSelect={handleDecide}
           />
-          <DecisionPanel
-            options={options}
-            onDecide={handleDecide}
-            selected={selected}
-            recommended={recommended}
-          />
+          <details className="group">
+            <summary className="flex w-fit cursor-pointer list-none items-center gap-2 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900">
+              <span
+                className="text-neutral-400 transition-transform group-open:rotate-90"
+                aria-hidden
+              >
+                ›
+              </span>
+              Adjust assumptions
+            </summary>
+            <div className="mt-3">
+              <DecisionCustomizer
+                state={company}
+                params={params}
+                onChange={handleParamsChange}
+              />
+            </div>
+          </details>
         </div>
       </section>
 
       {/* Simulation result */}
       {result && (
-        <section className={`mb-12 p-6 ${CARD}`}>
+        <section
+          key={result.action}
+          className={`mb-12 p-6 ${CARD} animate-[rise_0.4s_ease-out]`}
+        >
           <div className="text-xs uppercase tracking-wider text-neutral-500">
-            Simulated Decision
-          </div>
-          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-600">
-            <span className="text-neutral-900">✓</span>
-            Deterministic calculation complete
+            Board Decision Executed
           </div>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
             {result.label}
@@ -426,7 +444,21 @@ export default function Home() {
             {result.explanation}
           </p>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          {/* The payoff — cash visibly moves to its new position. */}
+          <div className="mt-5 flex flex-wrap items-baseline gap-2">
+            <span className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
+              <CountUp
+                value={result.updatedState.cashBalance}
+                from={company.cashBalance}
+                prefix="RM"
+              />
+            </span>
+            <span className="text-sm text-neutral-500">
+              projected cash after this decision
+            </span>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <span className="text-xs uppercase tracking-wider text-neutral-500">
               Risk Level
             </span>
@@ -456,6 +488,26 @@ export default function Home() {
               after={days(result.after.runwayDays)}
               improved={result.after.runwayDays > result.before.runwayDays}
             />
+          </div>
+
+          {/* Decision clarity — who backed it, and the honest downside. */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+              <div className="text-xs uppercase tracking-wider text-neutral-500">
+                Supported by
+              </div>
+              <div className="mt-1 text-sm font-medium text-neutral-900">
+                {DECISION_META[result.action].supporter}
+              </div>
+            </div>
+            <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+              <div className="text-xs uppercase tracking-wider text-neutral-500">
+                Downside
+              </div>
+              <div className="mt-1 text-sm text-neutral-600">
+                {DECISION_META[result.action].downside}
+              </div>
+            </div>
           </div>
 
           {/* Resolution beat — the outcome, stated from the real deltas. */}

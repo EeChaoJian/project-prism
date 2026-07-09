@@ -39,9 +39,9 @@ export const BOARDROOM_STEPS = [
 export const PHASE_LABEL: Record<BoardPhase, string> = {
   idle: "Idle",
   analyzing_metrics: "Reviewing the scenario",
-  cfo_processing: "Analyzing liquidity",
+  cfo_processing: "Maya Chen (CFO) — analyzing liquidity",
   handoff_context: "Reconciling priorities",
-  collections_processing: "Reviewing receivables",
+  collections_processing: "Daniel Reyes (Collections) — reviewing receivables",
   synchronized: "Board synchronized",
 };
 

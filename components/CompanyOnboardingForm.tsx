@@ -191,7 +191,7 @@ export default function CompanyOnboardingForm({
             }}
             className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300"
           >
-            Reload Sample
+            Load Demo Scenario
           </button>
           <button
             type="button"

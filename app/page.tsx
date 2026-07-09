@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MetricCard from "@/components/MetricCard";
 import AgentCard from "@/components/AgentCard";
 import DecisionCustomizer from "@/components/DecisionCustomizer";
@@ -66,6 +66,13 @@ const PRIMARY_BUTTON =
 
 type View = "briefing" | "setup" | "boardroom";
 
+// Respect the user's reduced-motion preference for programmatic scrolls.
+const scrollBehavior = (): ScrollBehavior =>
+  typeof window !== "undefined" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? "auto"
+    : "smooth";
+
 export default function Home() {
   // ---- Centralized dashboard state ---------------------------------------
   // Today's business situation and assumptions are the single source of
@@ -78,6 +85,20 @@ export default function Home() {
   );
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [selected, setSelected] = useState<DecisionAction | null>(null);
+
+  // The payoff must be witnessed: when a decision is committed, bring the
+  // result panel on screen. Live assumption tweaks keep `selected` stable,
+  // so they never re-trigger the scroll.
+  const resultRef = useRef<HTMLElement | null>(null);
+  const decisionRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (selected && resultRef.current) {
+      resultRef.current.scrollIntoView({
+        behavior: scrollBehavior(),
+        block: "start",
+      });
+    }
+  }, [selected]);
 
   // The AI boardroom is generated on demand via /api/boardroom.
   const {
@@ -180,12 +201,16 @@ export default function Home() {
           <RiskBadge level={riskLevel(company, health)} />
         </div>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">
-          Payroll may fail in {company.payrollDueInDays} days. The boardroom has
-          been called.
+          The board is in session.
         </h1>
         <p className="mt-3 max-w-2xl font-normal text-neutral-500">
-          Project Prism is an AI boardroom for SME financial decisions. The
-          numbers come from the simulation; the agents explain the trade-offs.
+          {health.payrollRisk
+            ? `Projected cash falls ${rm(health.payrollGap)} short of the ${rm(
+                company.payrollAmount
+              )} payroll due in ${
+                company.payrollDueInDays
+              } days. Your executives are reviewing the options now.`
+            : `No payroll risk detected for ${company.companyName}. The board will pressure-test the position before you commit.`}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
           <span>
@@ -202,63 +227,6 @@ export default function Home() {
           </button>
         </div>
       </header>
-
-      {/* Executive Crisis Command — computed directly from checkFinancialHealth */}
-      {health.payrollRisk ? (
-        <section className="mb-12 rounded-2xl bg-neutral-900 p-6 text-white shadow-md sm:p-7">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-widest text-white/70">
-                Emergency Board Meeting Required
-              </div>
-              <p className="mt-2 text-lg font-semibold tracking-tight sm:text-xl">
-                Projected cash falls short of payroll by{" "}
-                {rm(health.payrollGap)}.
-              </p>
-              <p className="mt-2 text-sm text-neutral-300">
-                Convene your board to pressure-test the options before you
-                decide.
-              </p>
-            </div>
-            <button
-              onClick={() => convene(company)}
-              disabled={boardStatus === "running"}
-              className="shrink-0 rounded-xl bg-white px-5 py-2.5 font-medium text-neutral-900 shadow-sm transition-all hover:bg-neutral-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {boardStatus === "idle"
-                ? "Convene Boardroom"
-                : boardStatus === "running"
-                  ? "Convening…"
-                  : "Re-convene Boardroom"}
-            </button>
-          </div>
-        </section>
-      ) : (
-        <section className={`mb-12 p-6 sm:p-7 ${CARD}`}>
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-neutral-500">
-                Cash Position Stable
-              </div>
-              <p className="mt-2 text-lg font-semibold tracking-tight text-neutral-900 sm:text-xl">
-                No payroll risk detected for {company.companyName}.
-              </p>
-              <p className="mt-2 text-sm text-neutral-500">{health.alertMessage}</p>
-            </div>
-            <button
-              onClick={() => convene(company)}
-              disabled={boardStatus === "running"}
-              className={`shrink-0 ${PRIMARY_BUTTON} disabled:cursor-not-allowed disabled:opacity-50`}
-            >
-              {boardStatus === "idle"
-                ? "Convene Boardroom"
-                : boardStatus === "running"
-                  ? "Convening…"
-                  : "Re-convene Boardroom"}
-            </button>
-          </div>
-        </section>
-      )}
 
       {/* Dashboard metrics */}
       <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -310,19 +278,17 @@ export default function Home() {
               back from the receivables side. Then the owner decides.
             </p>
           </div>
-          {/* The primary Convene CTA lives in the crisis command above; here we
-              only surface the in-context control once a run has started. */}
-          {boardStatus !== "idle" && (
-            <button
-              onClick={() => convene(company)}
-              disabled={boardStatus === "running"}
-              className={`shrink-0 ${PRIMARY_BUTTON} disabled:cursor-not-allowed disabled:opacity-50`}
-            >
-              {boardStatus === "running"
+          <button
+            onClick={() => convene(company)}
+            disabled={boardStatus === "running"}
+            className={`shrink-0 ${PRIMARY_BUTTON} disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            {boardStatus === "idle"
+              ? "Convene Boardroom"
+              : boardStatus === "running"
                 ? "Convening…"
                 : "Re-convene Boardroom"}
-            </button>
-          )}
+          </button>
         </div>
 
         {boardStatus === "idle" && (
@@ -389,15 +355,14 @@ export default function Home() {
       </section>
 
       {/* Owner decision — one surface: the comparison table commits the choice */}
-      <section className="mb-12">
+      <section ref={decisionRef} className="mb-12 scroll-mt-6">
         <div className="mb-5">
           <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
             Your Decision
           </h2>
           <p className="text-sm text-neutral-500">
-            Pick the response with the outcome you want. The simulation updates
-            instantly — the AI explains the trade-off, it never invents the
-            numbers.
+            Every option, simulated. Pick one — the numbers update instantly.
+            The AI never invents these numbers.
           </p>
         </div>
         <div className="space-y-3">
@@ -431,8 +396,9 @@ export default function Home() {
       {/* Simulation result */}
       {result && (
         <section
+          ref={resultRef}
           key={result.action}
-          className={`mb-12 p-6 ${CARD} animate-[rise_0.4s_ease-out]`}
+          className={`mb-12 scroll-mt-6 p-6 ${CARD} animate-[rise_0.4s_ease-out]`}
         >
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs uppercase tracking-wider text-neutral-500">
@@ -521,9 +487,19 @@ export default function Home() {
               Board Decision Implemented
             </div>
             <div className="mt-1">{boardOutcome(company.cashBalance, result)}</div>
-            <div className="mt-3 text-xs font-semibold text-white/70">
-              Next Review →
-            </div>
+            <button
+              onClick={() => {
+                setResult(null);
+                setSelected(null);
+                decisionRef.current?.scrollIntoView({
+                  behavior: scrollBehavior(),
+                  block: "start",
+                });
+              }}
+              className="mt-3 text-xs font-semibold text-white/70 transition-colors hover:text-white"
+            >
+              Try a different decision ↺
+            </button>
           </div>
         </section>
       )}
@@ -534,8 +510,8 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-neutral-200 pt-6 text-xs text-neutral-400">
-        Project Prism · AI Boardroom MVP · Numbers from simulation, reasoning
-        from AI.
+        Project Prism · The math is deterministic. The debate is AI. The
+        decision is yours.
       </footer>
     </main>
   );
@@ -566,12 +542,11 @@ function SourceBadge({ source }: { source: BoardSource | null }) {
     },
     "partial-fallback": {
       dot: "bg-neutral-400",
-      label: "Partial: one agent live, one static fallback",
+      label: "One executive live via Fireworks AI, one offline — numbers unaffected",
     },
     fallback: {
       dot: "bg-neutral-400",
-      label:
-        "Offline fallback — static boardroom (set FIREWORKS_API_KEY for live AI)",
+      label: "Boardroom in offline mode — same numbers, same decision engine",
     },
   };
   const c = source ? config[source] : config.fallback;

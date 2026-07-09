@@ -68,11 +68,13 @@ export default function CashFlowChart({
     <div className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm transition-all duration-200">
       <div className="mb-4">
         <h3 className="text-base font-semibold tracking-tight text-neutral-900">
-          Projected Cash to Payroll
+          Projected Cash vs the Payroll Line
         </h3>
         <p className="text-xs text-neutral-500">
-          Daily cash on hand until payroll is due. The dashed line is the
-          RM{payrollAmount.toLocaleString()} payroll obligation.
+          Daily cash on hand through payday. When a line sits below the dashed
+          RM{payrollAmount.toLocaleString()} payroll line, that day&apos;s cash
+          can&apos;t cover payroll in full. (Runway is a different measure — it
+          counts the days until cash reaches zero.)
         </p>
       </div>
 
@@ -114,7 +116,12 @@ export default function CashFlowChart({
             y={payrollAmount}
             stroke="#737373"
             strokeDasharray="6 4"
-            label={{ value: "Payroll", fill: "#737373", fontSize: 11, position: "insideTopRight" }}
+            label={{
+              value: `Payroll RM${payrollAmount.toLocaleString()}`,
+              fill: "#737373",
+              fontSize: 11,
+              position: "insideTopRight",
+            }}
           />
 
           <Area

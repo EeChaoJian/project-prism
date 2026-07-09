@@ -11,6 +11,39 @@ strategic decisions before making them.
 
 > Built for the AMD Developer Hackathon ACT II — Track 3 (Unicorn Track).
 
+![Project Prism — emergency briefing](docs/screenshot-briefing.png)
+
+---
+
+## Architecture — deterministic core, AI on top
+
+The most important design decision: **the AI never calculates a number.** Every
+figure comes from plain, testable TypeScript. The board only *explains* the
+trade-offs. If the AI is unavailable, the app falls back to a static board and
+the numbers are identical — the demo cannot break.
+
+```
+                 ┌─────────────────────────────────────────────┐
+                 │            checkFinancialHealth()            │  ← deterministic
+   business ───▶ │   cash · runway · payroll gap · risk level   │     (frozen,
+   inputs        └───────────────────┬─────────────────────────┘      testable)
+                                     │
+                      ┌──────────────┴───────────────┐
+                      ▼                               ▼
+            ┌───────────────────┐          ┌────────────────────────┐
+            │  AI boardroom      │          │  simulateDecision()    │  ← deterministic
+            │  (Fireworks AI)    │          │  each option's outcome │
+            │  explains only     │          │  cash / runway / risk  │
+            │  ⤷ static fallback │          └───────────┬────────────┘
+            └───────────────────┘                      │
+                      │                                 ▼
+                      └──────────▶  UI: compare options, pick, see impact
+```
+
+**Why this matters for judges:** the AI is *enhancement, not dependency*. Pull
+the API key and the product still works, still shows correct numbers, still
+tells the story. That is the opposite of most "AI" demos.
+
 ---
 
 ## The problem

@@ -2,14 +2,16 @@
 
 **AI Boardroom for SME financial decisions.**
 
-Project Prism turns a payroll crisis into a boardroom decision: two AI agents
-argue the trade-off, then a deterministic simulation shows what the owner's
-choice does to cash, runway, and payroll risk.
+Accounting software records history. Project Prism lets owners rehearse
+decisions before making them: two AI executives argue the trade-off, then a
+deterministic simulation shows what the owner's choice does to cash, runway,
+and payroll risk.
 
-No: accounting software records history. Project Prism lets owners rehearse
-strategic decisions before making them.
+**The math is deterministic. The debate is AI. The decision is yours.**
 
 > Built for the AMD Developer Hackathon ACT II — Track 3 (Unicorn Track).
+> Boardroom inference runs on [Fireworks AI](https://fireworks.ai)
+> (Llama 3.1 70B), the hackathon's AMD-powered inference platform.
 
 ![Project Prism — emergency briefing](docs/screenshot-briefing.png)
 
@@ -67,7 +69,7 @@ Updated cash position
 ```
 
 The demo opens on an **emergency briefing** — a crisis snapshot (cash, payroll
-countdown, receivables, survival runway, risk level) with one CTA: *Enter
+countdown, projected shortfall, runway, risk level) with one CTA: *Enter
 Boardroom*. Inside, two named executives weigh in: **Maya Chen (CFO)** argues
 for preserving cash; **Daniel Reyes (Collections Manager)** disagrees and pushes
 receivables recovery. A **Compare all options** table shows every action's
@@ -101,32 +103,24 @@ letting the model invent financial numbers.
 
 ---
 
-## Architecture
-
-This build pairs a **deterministic core** — the safety net for the whole demo —
-with a completed, live **sequential streaming multi-agent boardroom**. The CFO
-and Collections Manager run as two sequential Fireworks AI inferences: the
-CFO's output is streamed into the Collections Manager's context so the agents
-can disagree from different priorities. Every number on the screen still comes
-from plain, testable TypeScript logic, and the boardroom falls back to a static,
-schema-identical mock whenever a key is absent or a call fails.
-
-### The core loop
+## How a session runs
 
 ```
 Risk detected → agents respond → owner chooses → simulation updates
 ```
 
-1. A hardcoded sample company (**Harbour Coffee Roasters**) is loaded.
+1. A sample company (**Harbour Coffee Roasters**) is loaded — or the owner
+   enters their own numbers.
 2. `checkFinancialHealth()` detects a payroll cash crunch.
-3. The owner convenes the boardroom: two AI agents (**CFO**, then **Collections
-   Manager**) reason **sequentially** over the same numbers.
+3. The boardroom convenes: two AI executives (**CFO**, then **Collections
+   Manager**) reason **sequentially** over the same numbers — the second
+   reads the first's argument and pushes back.
 4. The owner clicks a decision.
 5. `simulateDecision()` deterministically updates the metrics and chart.
 
 ---
 
-## The AI boardroom (Milestone 2)
+## The AI boardroom
 
 Clicking **Convene the Boardroom** streams a live, two-step analysis:
 
@@ -198,17 +192,23 @@ project-prism/
 │   ├── page.tsx            # Dashboard: wires everything together
 │   └── globals.css         # Tailwind + background styling
 ├── components/
+│   ├── EmergencyBriefing.tsx    # Landing: crisis snapshot + Enter Boardroom CTA
+│   ├── CompanyOnboardingForm.tsx# Owner enters their own business numbers
 │   ├── MetricCard.tsx           # Dashboard metric card (with before/after)
-│   ├── AgentCard.tsx            # Agent card: recommendation, bullets, risk, confidence
+│   ├── AgentCard.tsx            # Executive card: recommendation, bullets, risk
+│   ├── RiskBadge.tsx            # Four-segment risk meter
 │   ├── BoardroomStatus.tsx      # Compact sequential step indicator
 │   ├── OrchestrationConsole.tsx # Live boardroom thinking trace
-│   ├── DecisionPanel.tsx        # Owner decision buttons
+│   ├── OptionComparison.tsx     # All options side by side; click to commit
+│   ├── CountUp.tsx              # Animated cash counter (reduced-motion aware)
 │   └── CashFlowChart.tsx        # Projected cash chart (Recharts)
 ├── lib/
-│   ├── financialState.ts   # Hardcoded sample SME state
+│   ├── financialState.ts   # Sample SME state + types
 │   ├── healthCheck.ts      # checkFinancialHealth() — deterministic
 │   ├── simulation.ts       # simulateDecision() — deterministic (unchanged)
-│   ├── agents.ts           # Static mock boardroom (fallback data + shared type)
+│   ├── risk.ts             # Risk level derivation (Low → Critical)
+│   ├── executives.ts       # Named executives: Maya Chen (CFO), Daniel Reyes
+│   ├── agents.ts           # Static fallback boardroom (data + shared type)
 │   ├── fireworks.ts        # Server-only Fireworks calls + schema enforcement
 │   ├── boardroom.ts        # Shared streamed-event protocol + phase types
 │   └── useBoardroom.ts     # Client hook: streams /api/boardroom

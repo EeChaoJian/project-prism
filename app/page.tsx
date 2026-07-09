@@ -5,6 +5,7 @@ import MetricCard from "@/components/MetricCard";
 import AgentCard from "@/components/AgentCard";
 import DecisionCustomizer from "@/components/DecisionCustomizer";
 import OptionComparison from "@/components/OptionComparison";
+import ExecutiveActionPlan from "@/components/ExecutiveActionPlan";
 import CountUp from "@/components/CountUp";
 import CashFlowChart from "@/components/CashFlowChart";
 import BoardroomStatus from "@/components/BoardroomStatus";
@@ -502,6 +503,10 @@ export default function Home() {
             </button>
           </div>
         </section>
+      )}
+
+      {result && (
+        <ExecutiveActionPlan company={company} result={result} board={board} />
       )}
 
       {/* Cash projection chart */}

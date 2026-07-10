@@ -109,6 +109,7 @@ export default function Home() {
     board,
     activeStep,
     source,
+    model,
     convene,
     reset,
   } = useBoardroom();
@@ -322,7 +323,9 @@ export default function Home() {
             )}
 
             {/* Provenance of the final result. */}
-            {boardStatus === "done" && <SourceBadge source={source} />}
+            {boardStatus === "done" && (
+              <SourceBadge source={source} model={model} />
+            )}
 
             {/* Agent cards — revealed progressively as they arrive. */}
             {board.length > 0 && (
@@ -526,11 +529,16 @@ export default function Home() {
 function boardOutcome(companyCash: number, result: SimulationResult): string {
   const cashUp = result.updatedState.cashBalance - companyCash;
   const runwayUp = Math.round(result.after.runwayDays - result.before.runwayDays);
-  if (cashUp === 0) {
+  if (result.action === "do_nothing") {
     return "No action taken — payroll risk remains and the board is still exposed.";
   }
   if (!result.after.payrollRisk && result.before.payrollRisk) {
     return `Payroll protected. Runway +${runwayUp} days.`;
+  }
+  if (result.action === "delay_equipment") {
+    return `Scheduled equipment outflow delayed · payroll gap now RM${Math.round(
+      result.after.payrollGap
+    ).toLocaleString()} — narrowed, still exposed.`;
   }
   return `Cash up RM${Math.round(
     cashUp
@@ -539,19 +547,28 @@ function boardOutcome(companyCash: number, result: SimulationResult): string {
   ).toLocaleString()} — narrowed, still exposed.`;
 }
 
-function SourceBadge({ source }: { source: BoardSource | null }) {
-  const config: Record<BoardSource, { dot: string; label: string }> = {
+function SourceBadge({
+  source,
+  model,
+}: {
+  source: BoardSource | null;
+  model: string | null;
+}) {
+  const config: Record<BoardSource, { dot: string; label: (model: string | null) => string }> = {
     fireworks: {
       dot: "bg-neutral-900",
-      label: "Generated live by Fireworks AI · Llama 3.1 70B",
+      label: (model) => `Generated live by Fireworks AI · ${model ?? "configured model"}`,
     },
     "partial-fallback": {
       dot: "bg-neutral-400",
-      label: "One executive live via Fireworks AI, one offline — numbers unaffected",
+      label: (model) =>
+        `One executive live via Fireworks AI · ${
+          model ?? "configured model"
+        }, one offline — numbers unaffected`,
     },
     fallback: {
       dot: "bg-neutral-400",
-      label: "Boardroom in offline mode — same numbers, same decision engine",
+      label: () => "Boardroom in offline mode — same numbers, same decision engine",
     },
   };
   const c = source ? config[source] : config.fallback;
@@ -559,7 +576,7 @@ function SourceBadge({ source }: { source: BoardSource | null }) {
   return (
     <div className="flex items-center gap-2 text-xs text-neutral-500">
       <span className={`inline-block h-2 w-2 rounded-full ${c.dot}`} />
-      <span>{c.label}</span>
+      <span>{c.label(model)}</span>
     </div>
   );
 }

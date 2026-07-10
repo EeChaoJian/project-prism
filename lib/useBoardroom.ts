@@ -13,7 +13,7 @@
 import { useCallback, useRef, useState } from "react";
 import type { FinancialState } from "./financialState";
 import { getAgentResponses, type AgentResponse } from "./agents";
-import { phaseToActiveStep } from "./boardroom";
+import { isBoardroomEvent, phaseToActiveStep } from "./boardroom";
 import type { BoardPhase, BoardSource, BoardroomEvent } from "./boardroom";
 
 export type BoardStatus = "idle" | "running" | "done";
@@ -24,6 +24,7 @@ interface BoardroomState {
   logs: string[];
   board: AgentResponse[];
   source: BoardSource | null;
+  model: string | null;
 }
 
 const IDLE_STATE: BoardroomState = {
@@ -32,6 +33,7 @@ const IDLE_STATE: BoardroomState = {
   logs: [],
   board: [],
   source: null,
+  model: null,
 };
 
 export function useBoardroom() {
@@ -57,6 +59,7 @@ export function useBoardroom() {
       logs: [],
       board: [],
       source: null,
+      model: null,
     }));
 
     const handle = (event: BoardroomEvent) => {
@@ -75,10 +78,28 @@ export function useBoardroom() {
             ...s,
             status: "done",
             source: event.source,
+            model: event.model ?? null,
             phase: "synchronized",
           }));
           break;
       }
+    };
+
+    const parseAndHandle = (line: string) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(line);
+      } catch {
+        console.warn("[boardroom] ignored malformed stream JSON");
+        return;
+      }
+
+      if (!isBoardroomEvent(parsed)) {
+        console.warn("[boardroom] ignored unknown stream event", parsed);
+        return;
+      }
+
+      handle(parsed);
     };
 
     try {
@@ -106,14 +127,14 @@ export function useBoardroom() {
           while (nl >= 0) {
             const line = buffer.slice(0, nl).trim();
             buffer = buffer.slice(nl + 1);
-            if (line) handle(JSON.parse(line) as BoardroomEvent);
+            if (line) parseAndHandle(line);
             nl = buffer.indexOf("\n");
           }
         }
       }
 
       const rest = buffer.trim();
-      if (rest) handle(JSON.parse(rest) as BoardroomEvent);
+      if (rest) parseAndHandle(rest);
 
       // Safety net: stream closed without an explicit "done" event.
       apply((s) =>
@@ -137,6 +158,7 @@ export function useBoardroom() {
         ],
         board: [cfo, collections],
         source: "fallback",
+        model: null,
       }));
     }
   }, []);

@@ -13,7 +13,7 @@ export default function AgentCard({
   speaking?: boolean;
 }) {
   const exec = EXECUTIVES[agent.agent];
-  const scenarioConfidence = Math.round(agent.scenarioConfidence * 100);
+  const payrollCoverage = Math.round(agent.payrollCoverageScore * 100);
 
   return (
     <div
@@ -79,10 +79,10 @@ export default function AgentCard({
         </div>
         <div>
           <div className="text-xs uppercase tracking-wider text-neutral-500">
-            Scenario Confidence
+            Payroll Coverage
           </div>
           <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-neutral-900">
-            {scenarioConfidence}%
+            {payrollCoverage}%
           </div>
           <div className="mt-0.5 text-[11px] text-neutral-400">
             Based on current assumptions

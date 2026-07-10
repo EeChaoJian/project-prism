@@ -31,7 +31,7 @@ payroll alert appears, decisions update metrics + chart immediately.
 
 Goal: replace the hardcoded agent cards with live, sequential AI reasoning.
 
-- [x] Fireworks AI integration (`llama-v3p1-70b-instruct`)
+- [x] Fireworks AI integration (`accounts/fireworks/models/minimax-m3`)
 - [x] Server-side route `/api/boardroom` orchestrating two inferences
 - [x] INFERENCE 1 (CFO) → structured JSON strategy
 - [x] INFERENCE 2 (Collections Manager) receives the CFO's literal output and

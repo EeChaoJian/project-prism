@@ -11,7 +11,7 @@ and payroll risk.
 
 > Built for the AMD Developer Hackathon ACT II — Track 3 (Unicorn Track).
 > Boardroom inference runs on [Fireworks AI](https://fireworks.ai)
-> (Llama 3.1 70B), the hackathon's AMD-powered inference platform.
+> using the configured Fireworks model.
 
 ![Project Prism — emergency briefing](docs/screenshot-briefing.png)
 
@@ -125,24 +125,21 @@ Risk detected → agents respond → owner chooses → simulation updates
 Clicking **Convene the Boardroom** streams a live, two-step analysis:
 
 - **Step 1 — CFO** evaluates the deterministic financial numbers and returns a
-  headline, recommendation, three bullets, primary risk, and scenario confidence.
+  headline, recommendation, three bullets, primary risk, and payroll coverage score.
 - **Step 2 — Collections Manager** receives the CFO's *literal* output, reads
   its stance, and responds from the receivables angle.
 
 Both inferences run **server-side** in `/api/boardroom` via
-[Fireworks AI](https://fireworks.ai) (`llama-v3p1-70b-instruct`). The route
+[Fireworks AI](https://fireworks.ai) (`accounts/fireworks/models/minimax-m3`
+by default). The route
 streams NDJSON events so the UI shows a live "Step 1 → Step 2" indicator.
 
 **The AI never invents numbers.** Every figure comes from the deterministic
 engine; the agents only produce natural-language reasoning. Their JSON is
 schema-validated server-side.
 
-**Scenario confidence is deterministic.** The displayed confidence reflects
+**Payroll coverage score is deterministic.** The displayed score reflects
 whether that agent's recommended response protects payroll in the simulation.
-
-**Benchmark data is synthetic.** The lookalike cohort is hardcoded demo
-benchmark data for the hackathon. It is used only as illustrative context, not
-as verified market evidence.
 
 **No key? It still works.** If `FIREWORKS_API_KEY` is missing, the API errors,
 or a response fails to decode, the route automatically falls back to the static
@@ -196,6 +193,7 @@ project-prism/
 │   ├── CompanyOnboardingForm.tsx# Owner enters their own business numbers
 │   ├── MetricCard.tsx           # Dashboard metric card (with before/after)
 │   ├── AgentCard.tsx            # Executive card: recommendation, bullets, risk
+│   ├── ExecutiveActionPlan.tsx   # Post-decision action brief
 │   ├── RiskBadge.tsx            # Four-segment risk meter
 │   ├── BoardroomStatus.tsx      # Compact sequential step indicator
 │   ├── OrchestrationConsole.tsx # Live boardroom thinking trace
@@ -205,7 +203,7 @@ project-prism/
 ├── lib/
 │   ├── financialState.ts   # Sample SME state + types
 │   ├── healthCheck.ts      # checkFinancialHealth() — deterministic
-│   ├── simulation.ts       # simulateDecision() — deterministic (unchanged)
+│   ├── simulation.ts       # simulateDecision() — deterministic
 │   ├── risk.ts             # Risk level derivation (Low → Critical)
 │   ├── executives.ts       # Named executives: Maya Chen (CFO), Daniel Reyes
 │   ├── agents.ts           # Static fallback boardroom (data + shared type)
@@ -225,7 +223,7 @@ project-prism/
 | ---------------------------- | --------------------------------------------------------------- |
 | Expected collections         | `sum(invoice.amount × collectionProbability)`                   |
 | Operating burn to payroll    | `monthlyOpex ÷ 30 × payrollDueInDays`                           |
-| Projected cash before payroll| `cashBalance + expectedCollections − operatingBurnToPayroll`    |
+| Projected cash before payroll| `cashBalance + expectedCollections − operatingBurnToPayroll − equipmentPurchase` |
 | Payroll gap                  | `payrollAmount − projectedCashBeforePayroll`                    |
 | Payroll risk                 | `payrollGap > 0`                                                |
 | Runway days                  | `cashBalance ÷ (monthlyOpex ÷ 30)`                             |

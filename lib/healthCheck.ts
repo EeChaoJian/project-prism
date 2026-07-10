@@ -24,6 +24,9 @@ export function checkFinancialHealth(state: FinancialState): FinancialHealth {
   const payrollAmount = Number.isFinite(state.payrollAmount)
     ? Math.max(0, state.payrollAmount)
     : 0;
+  const equipmentPurchase = Number.isFinite(state.equipmentPurchase)
+    ? Math.max(0, state.equipmentPurchase)
+    : 0;
   const payrollDueInDays =
     Number.isFinite(state.payrollDueInDays) && state.payrollDueInDays > 0
       ? state.payrollDueInDays
@@ -51,10 +54,13 @@ export function checkFinancialHealth(state: FinancialState): FinancialHealth {
   const operatingBurnToPayroll = dailyBurn * payrollDueInDays;
 
   // Cash we can reasonably expect to have on hand before payroll is due:
-  // today's cash plus expected collections, minus the operating burn that
-  // happens over those days.
+  // today's cash plus expected collections, minus operating burn and scheduled
+  // capex that would leave before payroll unless the owner delays it.
   const projectedCashBeforePayroll =
-    cashBalance + expectedCollections - operatingBurnToPayroll;
+    cashBalance +
+    expectedCollections -
+    operatingBurnToPayroll -
+    equipmentPurchase;
 
   // Positive gap means we are short for payroll.
   const payrollGap = payrollAmount - projectedCashBeforePayroll;

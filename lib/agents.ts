@@ -20,11 +20,11 @@ export interface AgentResponse {
   recommendation: string;
   reasoning: string[];
   risk: string;
-  scenarioConfidence: number; // 0..1
+  payrollCoverageScore: number; // 0..1
 }
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
-export const payrollCoverageConfidence = (
+export const payrollCoverageScore = (
   state: FinancialState,
   action: DecisionAction
 ) => {
@@ -37,7 +37,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
   const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
 
   // ---- CFO — protect payroll liquidity ---------------------------------
-  const cfoConfidence = payrollCoverageConfidence(state, "delay_equipment");
+  const cfoCoverage = payrollCoverageScore(state, "delay_equipment");
 
   const cfo: AgentResponse = {
     agent: "CFO",
@@ -48,13 +48,13 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
       `Cash is ${rm(state.cashBalance)}; payroll is ${rm(
         state.payrollAmount
       )}. The shortfall is real, not theoretical.`,
-      `Releasing the earmarked ${rm(
+      `Delaying the earmarked ${rm(
         state.equipmentPurchase
-      )} equipment payment puts that liquidity straight back into reserves.`,
+      )} equipment payment keeps that cash from leaving before payroll.`,
       "Waiting for overdue invoices adds timing risk when payroll has a fixed deadline.",
     ],
     risk: "Operations may slow if the equipment purchase is delayed.",
-    scenarioConfidence: cfoConfidence,
+    payrollCoverageScore: cfoCoverage,
   };
 
   // ---- Collections — receivables recovery assumptions ------------------
@@ -67,7 +67,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
   const targetName = target?.client ?? "the top receivable";
   const targetPct = Math.round((target?.collectionProbability ?? 0) * 100);
   const collectionsConfidence = target
-    ? payrollCoverageConfidence(state, "prioritize_alpha")
+    ? payrollCoverageScore(state, "prioritize_alpha")
     : 0;
 
   const collections: AgentResponse = target
@@ -86,7 +86,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
           )} equipment spend may cost momentum after the crisis passes.`,
         ],
         risk: "The invoice may not arrive before payroll is due.",
-        scenarioConfidence: collectionsConfidence,
+        payrollCoverageScore: collectionsConfidence,
       }
     : {
         agent: "Collections Manager",
@@ -100,7 +100,7 @@ export function getAgentResponses(state: FinancialState): AgentResponse[] {
           "The owner should focus on cash preservation or another immediate response.",
         ],
         risk: "The business has no receivables lever to pull before payroll.",
-        scenarioConfidence: 0,
+        payrollCoverageScore: 0,
       };
 
   return [cfo, collections];

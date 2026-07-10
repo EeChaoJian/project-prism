@@ -350,7 +350,7 @@ Format:
     "Preserving RM7,000 improves short-term liquidity."
   ],
   "risk": "Delaying equipment may slow operational improvements.",
-  "scenarioConfidence": 0.82
+  "payrollCoverageScore": 0.82
 }
 
 Do not allow agents to invent new financial numbers. They must use numbers from the current financial state.

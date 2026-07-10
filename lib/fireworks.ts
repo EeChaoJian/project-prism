@@ -10,16 +10,16 @@
 // JSON, missing fields). The API route catches those and falls back to the
 // static mock boardroom in lib/agents.ts, so the demo never breaks.
 
-import { lookalikeCohortData, type FinancialState } from "./financialState";
+import type { FinancialState } from "./financialState";
 import type { FinancialHealth } from "./healthCheck";
-import { payrollCoverageConfidence, type AgentResponse } from "./agents";
+import { payrollCoverageScore, type AgentResponse } from "./agents";
 
 export const FIREWORKS_MODEL =
-  process.env.FIREWORKS_MODEL ??
-  "accounts/fireworks/models/llama-v3p1-70b-instruct";
+  process.env.FIREWORKS_MODEL ?? "accounts/fireworks/models/minimax-m3";
 
 const FIREWORKS_URL =
   "https://api.fireworks.ai/inference/v1/chat/completions";
+const FIREWORKS_TIMEOUT_MS = 12000;
 
 // The two agents whose responses we generate, and the role blurb the UI shows.
 const ROLE_BY_AGENT: Record<AgentResponse["agent"], string> = {
@@ -30,6 +30,10 @@ const ROLE_BY_AGENT: Record<AgentResponse["agent"], string> = {
 
 export function hasFireworksKey(): boolean {
   return Boolean(process.env.FIREWORKS_API_KEY);
+}
+
+export function configuredFireworksModel(): string {
+  return FIREWORKS_MODEL;
 }
 
 const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
@@ -73,23 +77,6 @@ function buildContext(state: FinancialState, health: FinancialHealth): string {
   ].join("\n");
 }
 
-// Synthetic demo benchmark data. It gives the agents a concrete comparison
-// point for the hackathon demo, without claiming to be live or verified market
-// data. Values come from lib/financialState so prompts and stream logs stay in
-// sync. Amounts are interpolated from the live financial state so custom
-// company profiles stay coherent.
-const cohort = lookalikeCohortData;
-const pctOf = (n: number) => `${Math.round(n * 100)}%`;
-
-const cohortCfoNote = (state: FinancialState) =>
-  `Use the synthetic demo benchmark cohort ${cohort.cohortId} (n=${cohort.sampleSize}, ${cohort.industry}) as illustrative context only. In this demo benchmark, delaying capital expenditure to preserve ${rm(
-    state.equipmentPurchase
-  )} protected near-term payroll coverage in ${pctOf(
-    cohort.historicalOutcomes.delayEquipmentSuccessRate
-  )} of cases, compared with a no-action default benchmark of ${pctOf(
-    cohort.historicalOutcomes.defaultRateIfNoAction
-  )}. Label this as synthetic demo benchmark data if you cite it.`;
-
 // The receivable the Collections Manager is instructed to champion — the
 // largest outstanding invoice in whatever state was supplied.
 function primaryReceivable(state: FinancialState) {
@@ -98,8 +85,6 @@ function primaryReceivable(state: FinancialState) {
   >((top, inv) => (!top || inv.amount > top.amount ? inv : top), undefined);
 }
 
-const COHORT_COLLECTIONS = `Use the synthetic demo benchmark cohort ${cohort.cohortId} (n=${cohort.sampleSize}) as illustrative context only: early-settlement discounting accelerates invoice realization by an average of ${cohort.historicalOutcomes.discountInflowAccelerationDays} days in this demo benchmark. Label it as synthetic demo benchmark data if you cite it.`;
-
 // Every agent must return exactly the fields shown in the boardroom cards.
 const SCHEMA_INSTRUCTION = `Respond with a SINGLE valid JSON object and nothing else. Use exactly this schema:
 {
@@ -107,23 +92,22 @@ const SCHEMA_INSTRUCTION = `Respond with a SINGLE valid JSON object and nothing 
   "recommendation": "string",
   "reasoning": ["string", "string", "string"],
   "risk": "string",
-  "scenarioConfidence": number
+  "payrollCoverageScore": number
 }
 Rules:
 - "recommendation" must be one plain-spoken sentence.
 - "reasoning" must be exactly three short strings.
 - "risk" must be one concise primary risk.
-- "scenarioConfidence" is a number between 0 and 1.
+- "payrollCoverageScore" is a number between 0 and 1.
 - Only reference the financial figures provided. Compute every derived metric from them; never invent raw numbers.`;
 
 const cfoSystem = (state: FinancialState) =>
   `You are the CFO of a small business, speaking in a live financial boardroom. Be conservative and plain-spoken: your mandate is to protect payroll.
 Your recommendation is to "Delay Equipment Purchase". Argue that cutting a scheduled cash outflow is the clearest way to protect payroll, and that relying on overdue balances adds timing risk.
-Set scenarioConfidence to ${payrollCoverageConfidence(
+Set payrollCoverageScore to ${payrollCoverageScore(
     state,
     "delay_equipment"
   ).toFixed(2)}. This is the deterministic confidence that your recommendation protects payroll.
-${cohortCfoNote(state)}
 Write short, natural sentences fit for an urgent 3-minute board overview. Sound like an executive with something at stake, not a chatbot.
 ${SCHEMA_INSTRUCTION}`;
 
@@ -133,7 +117,7 @@ const collectionsSystem = (state: FinancialState) => {
     return `You are the Collections Manager of a small business, speaking in a live financial boardroom immediately after the CFO.
 There are no outstanding invoices. Do not invent a receivables recovery path.
 Your recommendation must state that collections cannot solve this scenario.
-Set scenarioConfidence to 0.
+Set payrollCoverageScore to 0.
 Write short, natural sentences fit for an urgent 3-minute board overview. Sound like an executive with something at stake, not a chatbot.
 ${SCHEMA_INSTRUCTION}`;
   }
@@ -143,11 +127,10 @@ ${SCHEMA_INSTRUCTION}`;
   return `You are the Collections Manager of a small business, speaking in a live financial boardroom immediately after the CFO. Push back on the CFO's conservative posture.
 Your recommendation is to "Prioritize ${targetName}". Argue that freezing the equipment purchase may slow operations. Counter using receivables recovery assumptions: ${targetName} carries ${targetPct}% settlement confidence on their ${targetAmount} outstanding balance.
 You have just received the CFO's structured output. Begin your recommendation with "I disagree." Make a concise counter-case from the receivables angle.
-Set scenarioConfidence to ${payrollCoverageConfidence(
+Set payrollCoverageScore to ${payrollCoverageScore(
     state,
     "prioritize_alpha"
   ).toFixed(2)}. This is the deterministic confidence that your recommendation protects payroll.
-${COHORT_COLLECTIONS}
 Write short, natural sentences fit for an urgent 3-minute board overview. Sound like an executive with something at stake, not a chatbot.
 ${SCHEMA_INSTRUCTION}`;
 };
@@ -161,23 +144,37 @@ interface ChatMessage {
 async function fireworksChat(messages: ChatMessage[]): Promise<string> {
   const apiKey = process.env.FIREWORKS_API_KEY;
   if (!apiKey) throw new Error("Missing FIREWORKS_API_KEY");
+  const signal = AbortSignal.timeout(FIREWORKS_TIMEOUT_MS);
 
-  const res = await fetch(FIREWORKS_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: FIREWORKS_MODEL,
-      messages,
-      temperature: 0.4,
-      max_tokens: 500,
-      response_format: { type: "json_object" },
-    }),
-    // Guard against a hung request stalling the whole boardroom.
-    signal: AbortSignal.timeout(25000),
-  });
+  let res: Response;
+  try {
+    res = await fetch(FIREWORKS_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: FIREWORKS_MODEL,
+        messages,
+        temperature: 0.3,
+        max_tokens: 320,
+        response_format: { type: "json_object" },
+      }),
+      signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "TimeoutError") {
+      throw new Error(
+        `Fireworks request timed out after ${FIREWORKS_TIMEOUT_MS}ms`
+      );
+    }
+    throw new Error(
+      `Fireworks request failed: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
+  }
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -225,7 +222,7 @@ function normalizeAgent(
     recommendation,
     reasoning: reasoning.slice(0, 3),
     risk,
-    scenarioConfidence: toUnit(deterministicConfidence),
+    payrollCoverageScore: toUnit(deterministicConfidence),
   };
 }
 
@@ -259,7 +256,7 @@ export async function runCFO(
   return parseAgent(
     content,
     "CFO",
-    payrollCoverageConfidence(state, "delay_equipment")
+    payrollCoverageScore(state, "delay_equipment")
   );
 }
 
@@ -289,6 +286,6 @@ export async function runCollections(
   return parseAgent(
     content,
     "Collections Manager",
-    target ? payrollCoverageConfidence(state, "prioritize_alpha") : 0
+    target ? payrollCoverageScore(state, "prioritize_alpha") : 0
   );
 }

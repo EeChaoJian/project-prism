@@ -39,12 +39,55 @@ const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
 // 0.9 × Client Alpha's RM10,000 = RM9,000; 0.2995 × RM20,700 total ≈ RM6,200.
 const RECOVERY_RATIO = 0.9;
 const DISCOUNT_ACCELERATION_RATIO = 0.2995;
+const clampCash = (value: number) =>
+  Number.isFinite(value) ? Math.max(0, value) : 0;
 
 export function largestInvoice(state: FinancialState): Invoice | undefined {
   return state.invoices.reduce<Invoice | undefined>(
     (top, inv) => (!top || inv.amount > top.amount ? inv : top),
     undefined
   );
+}
+
+function collectFromInvoice(
+  invoices: Invoice[],
+  client: string,
+  requestedAmount: number
+): { invoices: Invoice[]; collected: number; originalAmount: number } {
+  const amountToCollect = clampCash(requestedAmount);
+  let collected = 0;
+  let originalAmount = 0;
+
+  const nextInvoices = invoices.flatMap((invoice) => {
+    if (invoice.client !== client) return [{ ...invoice }];
+    originalAmount = invoice.amount;
+    collected = Math.min(invoice.amount, amountToCollect);
+    const remaining = invoice.amount - collected;
+    return remaining > 0 ? [{ ...invoice, amount: remaining }] : [];
+  });
+
+  return { invoices: nextInvoices, collected, originalAmount };
+}
+
+function collectAcrossInvoices(
+  invoices: Invoice[],
+  requestedAmount: number
+): { invoices: Invoice[]; collected: number } {
+  let remainingCashTarget = clampCash(requestedAmount);
+  let collected = 0;
+
+  const nextInvoices = invoices.flatMap((invoice) => {
+    if (remainingCashTarget <= 0) return [{ ...invoice }];
+    const invoiceCollection = Math.min(invoice.amount, remainingCashTarget);
+    remainingCashTarget -= invoiceCollection;
+    collected += invoiceCollection;
+    const remainingInvoiceAmount = invoice.amount - invoiceCollection;
+    return remainingInvoiceAmount > 0
+      ? [{ ...invoice, amount: remainingInvoiceAmount }]
+      : [];
+  });
+
+  return { invoices: nextInvoices, collected };
 }
 
 export function defaultDecisionParameters(
@@ -142,36 +185,48 @@ export function simulateDecision(
         break;
       }
 
-      label = `Prioritize ${target.client}`;
-      // The targeted client settles early: recovery cash lands, invoice clears.
-      updatedState.cashBalance += params.recoveryAmount;
-      updatedState.invoices = updatedState.invoices.filter(
-        (invoice) => invoice.client !== target.client
-      );
-      explanation = `${target.client} was prioritised and is expected to pay earlier, bringing ${rm(
+      const { invoices, collected, originalAmount } = collectFromInvoice(
+        updatedState.invoices,
+        target.client,
         params.recoveryAmount
-      )} into cash and clearing the ${rm(target.amount)} overdue balance.`;
+      );
+
+      label = `Prioritize ${target.client}`;
+      // The targeted client settles early: cash lands and the receivable balance
+      // falls by the same amount, preventing double-counted collections.
+      updatedState.cashBalance += collected;
+      updatedState.invoices = invoices;
+      explanation = `${target.client} was prioritised and is expected to pay earlier, bringing ${rm(
+        collected
+      )} into cash and reducing the ${rm(originalAmount)} overdue balance.`;
       break;
     }
     case "delay_equipment": {
       label = "Delay Equipment Purchase";
-      // Preserve the earmarked capex liquidity.
-      updatedState.cashBalance += params.capexSavings;
+      // Preserve cash by removing the scheduled capex outflow. Cash on hand
+      // does not increase; projected payroll coverage improves because the
+      // planned spend no longer leaves before payroll.
       updatedState.equipmentPurchase = Math.max(
         0,
         updatedState.equipmentPurchase - params.capexSavings
       );
-      explanation = `The equipment purchase was delayed, releasing the earmarked ${rm(
+      explanation = `The equipment purchase was delayed, preserving the earmarked ${rm(
         params.capexSavings
-      )} capital expense back into active liquid reserves to maintain payroll coverage.`;
+      )} capital expense instead of letting it leave before payroll.`;
       break;
     }
     case "early_payment_discount": {
       label = "Offer Early Payment Discount";
-      // The settlement incentive accelerates receivables into cash.
-      updatedState.cashBalance += params.acceleratedCash;
-      explanation = `A ${params.discountPercent}% early-settlement incentive accelerated ${rm(
+      const { invoices, collected } = collectAcrossInvoices(
+        updatedState.invoices,
         params.acceleratedCash
+      );
+      // The settlement incentive accelerates receivables into cash and reduces
+      // outstanding balances by the same amount.
+      updatedState.cashBalance += collected;
+      updatedState.invoices = invoices;
+      explanation = `A ${params.discountPercent}% early-settlement incentive accelerated ${rm(
+        collected
       )} of receivables into cash, at the cost of some margin.`;
       break;
     }

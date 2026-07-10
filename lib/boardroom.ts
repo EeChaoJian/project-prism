@@ -27,7 +27,52 @@ export type BoardroomEvent =
   | { type: "phase"; phase: BoardPhase }
   | { type: "log"; line: string }
   | { type: "agent"; agent: AgentResponse }
-  | { type: "done"; source: BoardSource };
+  | { type: "done"; source: BoardSource; model?: string };
+
+export function isBoardroomEvent(value: unknown): value is BoardroomEvent {
+  if (!value || typeof value !== "object") return false;
+  const event = value as Partial<BoardroomEvent>;
+
+  if (event.type === "phase") {
+    return (
+      event.phase === "idle" ||
+      event.phase === "analyzing_metrics" ||
+      event.phase === "cfo_processing" ||
+      event.phase === "handoff_context" ||
+      event.phase === "collections_processing" ||
+      event.phase === "synchronized"
+    );
+  }
+
+  if (event.type === "log") return typeof event.line === "string";
+
+  if (event.type === "agent") {
+    const agent = event.agent;
+    return (
+      Boolean(agent) &&
+      (agent?.agent === "CFO" || agent?.agent === "Collections Manager") &&
+      typeof agent?.role === "string" &&
+      typeof agent?.headline === "string" &&
+      typeof agent?.recommendation === "string" &&
+      Array.isArray(agent?.reasoning) &&
+      agent.reasoning.every((line) => typeof line === "string") &&
+      typeof agent?.risk === "string" &&
+      typeof agent?.payrollCoverageScore === "number" &&
+      Number.isFinite(agent.payrollCoverageScore)
+    );
+  }
+
+  if (event.type === "done") {
+    return (
+      (event.source === "fireworks" ||
+        event.source === "fallback" ||
+        event.source === "partial-fallback") &&
+      (event.model === undefined || typeof event.model === "string")
+    );
+  }
+
+  return false;
+}
 
 // Labels for the compact two-step indicator.
 export const BOARDROOM_STEPS = [

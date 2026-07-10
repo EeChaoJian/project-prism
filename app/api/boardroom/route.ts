@@ -13,14 +13,15 @@
 // simulateDecision() remain the single source of truth for every number. This
 // route only generates the agents' natural-language reasoning.
 
-import {
-  initialFinancialState,
-  lookalikeCohortData,
-  type FinancialState,
-} from "@/lib/financialState";
+import { initialFinancialState, type FinancialState } from "@/lib/financialState";
 import { checkFinancialHealth } from "@/lib/healthCheck";
 import { getAgentResponses, type AgentResponse } from "@/lib/agents";
-import { runCFO, runCollections, hasFireworksKey } from "@/lib/fireworks";
+import {
+  configuredFireworksModel,
+  runCFO,
+  runCollections,
+  hasFireworksKey,
+} from "@/lib/fireworks";
 import type { BoardroomEvent, BoardSource } from "@/lib/boardroom";
 
 export const runtime = "nodejs";
@@ -35,55 +36,66 @@ const nonNegative = (value: unknown, fallback = 0) =>
   typeof value === "number" && Number.isFinite(value)
     ? Math.max(0, value)
     : fallback;
+const positive = (value: unknown, fallback = 1) =>
+  typeof value === "number" && Number.isFinite(value) && value > 0
+    ? value
+    : fallback;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object" && !Array.isArray(value);
+const relationshipRisk = (
+  value: unknown
+): FinancialState["invoices"][number]["relationshipRisk"] =>
+  value === "Low" || value === "Medium" || value === "High"
+    ? value
+    : "Medium";
+
+function resolveInvoices(value: unknown): FinancialState["invoices"] | null {
+  if (!Array.isArray(value)) return null;
+  const invoices = value
+    .map((invoice, index) => {
+      if (!isRecord(invoice)) return null;
+      return {
+        client:
+          typeof invoice.client === "string" && invoice.client.trim()
+            ? invoice.client.trim()
+            : `Client ${index + 1}`,
+        amount: nonNegative(invoice.amount),
+        daysOverdue: nonNegative(invoice.daysOverdue),
+        collectionProbability: Math.min(
+          1,
+          Math.max(0, nonNegative(invoice.collectionProbability))
+        ),
+        relationshipRisk: relationshipRisk(invoice.relationshipRisk),
+      };
+    })
+    .filter((invoice): invoice is FinancialState["invoices"][number] =>
+      Boolean(invoice)
+    );
+
+  return invoices.length === value.length ? invoices : null;
+}
 
 // Accept a posted state only if it structurally looks like a FinancialState;
 // otherwise fall back to the hardcoded demo company.
 function resolveState(body: unknown): FinancialState {
-  const state = (body as { state?: unknown } | null)?.state as
-    | Partial<FinancialState>
-    | undefined;
-  if (
-    state &&
-    typeof state.cashBalance === "number" &&
-    typeof state.payrollAmount === "number" &&
-    typeof state.monthlyOpex === "number" &&
-    Array.isArray(state.invoices)
-  ) {
-    return {
-      companyName:
-        typeof state.companyName === "string" && state.companyName.trim()
-          ? state.companyName.trim()
-          : initialFinancialState.companyName,
-      cashBalance: nonNegative(state.cashBalance),
-      monthlyRevenue: Math.max(1, nonNegative(state.monthlyRevenue, 1)),
-      monthlyOpex: Math.max(1, nonNegative(state.monthlyOpex, 1)),
-      payrollAmount: Math.max(1, nonNegative(state.payrollAmount, 1)),
-      payrollDueInDays: Math.max(1, nonNegative(state.payrollDueInDays, 1)),
-      equipmentPurchase: nonNegative(state.equipmentPurchase),
-      invoices: state.invoices.map((invoice, index) => {
-        const inv = invoice as Partial<FinancialState["invoices"][number]>;
-        return {
-          client:
-            typeof inv.client === "string" && inv.client.trim()
-              ? inv.client.trim()
-              : `Client ${index + 1}`,
-          amount: nonNegative(inv.amount),
-          daysOverdue: nonNegative(inv.daysOverdue),
-          collectionProbability: Math.min(
-            1,
-            Math.max(0, nonNegative(inv.collectionProbability))
-          ),
-          relationshipRisk:
-            inv.relationshipRisk === "Low" ||
-            inv.relationshipRisk === "Medium" ||
-            inv.relationshipRisk === "High"
-              ? inv.relationshipRisk
-              : "Medium",
-        };
-      }),
-    };
-  }
-  return initialFinancialState;
+  if (!isRecord(body) || !isRecord(body.state)) return initialFinancialState;
+  const state = body.state;
+  const invoices = resolveInvoices(state.invoices);
+  if (!invoices) return initialFinancialState;
+
+  return {
+    companyName:
+      typeof state.companyName === "string" && state.companyName.trim()
+        ? state.companyName.trim()
+        : initialFinancialState.companyName,
+    cashBalance: nonNegative(state.cashBalance),
+    monthlyRevenue: positive(state.monthlyRevenue),
+    monthlyOpex: positive(state.monthlyOpex),
+    payrollAmount: positive(state.payrollAmount),
+    payrollDueInDays: positive(state.payrollDueInDays),
+    equipmentPurchase: nonNegative(state.equipmentPurchase),
+    invoices,
+  };
 }
 
 export async function POST(req: Request) {
@@ -116,16 +128,6 @@ export async function POST(req: Request) {
         `[BOARDROOM]: Payroll is due in ${state.payrollDueInDays} days. Current gap: ${rm(
           health.payrollGap
         )}.`
-      );
-      // Synthetic benchmark context for the demo. This is not live market data.
-      await log(
-        "[BOARDROOM]: Reviewing synthetic benchmark data (illustrative demo only)..."
-      );
-      await log(
-        "[BOARDROOM]: Comparing this scenario with a synthetic SME cash-flow cohort..."
-      );
-      await log(
-        `[BOARDROOM]: Benchmark ${lookalikeCohortData.cohortId} loaded (synthetic n=${lookalikeCohortData.sampleSize}).`
       );
       await log("[BOARDROOM]: Preparing board recommendations...");
 
@@ -168,7 +170,11 @@ export async function POST(req: Request) {
       // ---- PHASE: synchronized --------------------------------------------
       send({ type: "phase", phase: "synchronized" });
       await log("[BOARDROOM]: Board synchronized. Owner decision required.");
-      send({ type: "done", source });
+      send({
+        type: "done",
+        source,
+        model: source === "fallback" ? undefined : configuredFireworksModel(),
+      });
       controller.close();
     },
   });

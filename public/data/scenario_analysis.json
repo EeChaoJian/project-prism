@@ -1,0 +1,53 @@
+{
+  "device": "cpu (x86_64) \u2014 snapshot; regenerate on AMD to stamp GPU",
+  "generatedAt": "2026-07-11T06:14:13+00:00",
+  "method": "Monte Carlo over invoice-collection and operating-burn variance",
+  "paths": 50000,
+  "seed": 20260711,
+  "payrollAmount": 18000,
+  "payrollDueInDays": 18,
+  "note": "Illustrative scenario analysis. Variance assumptions are modelled, not fitted from real data. Means reconcile with the deterministic engine (lib/healthCheck.ts); this layer only adds the distribution around the deterministic expected case.",
+  "recommended": "delay_equipment",
+  "options": [
+    {
+      "action": "delay_equipment",
+      "label": "Delay Equipment Purchase",
+      "survivalProbability": 0.4619,
+      "deterministicProjectedCash": 16445,
+      "deterministicPayrollGap": 1555,
+      "meanProjectedCash": 16455,
+      "p10ProjectedCash": 8789,
+      "p90ProjectedCash": 23574
+    },
+    {
+      "action": "early_payment_discount",
+      "label": "Offer Early Payment Discount",
+      "survivalProbability": 0.4007,
+      "deterministicProjectedCash": 15645,
+      "deterministicPayrollGap": 2355,
+      "meanProjectedCash": 15650,
+      "p10ProjectedCash": 7992,
+      "p90ProjectedCash": 22734
+    },
+    {
+      "action": "do_nothing",
+      "label": "Do Nothing",
+      "survivalProbability": 0.0434,
+      "deterministicProjectedCash": 9445,
+      "deterministicPayrollGap": 8555,
+      "meanProjectedCash": 9457,
+      "p10ProjectedCash": 1802,
+      "p90ProjectedCash": 16593
+    },
+    {
+      "action": "prioritize_alpha",
+      "label": "Prioritize Client Alpha",
+      "survivalProbability": 0.0215,
+      "deterministicProjectedCash": 10445,
+      "deterministicPayrollGap": 7555,
+      "meanProjectedCash": 10444,
+      "p10ProjectedCash": 4759,
+      "p90ProjectedCash": 16075
+    }
+  ]
+}

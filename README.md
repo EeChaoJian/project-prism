@@ -148,6 +148,36 @@ result came from **Fireworks AI** or the **offline fallback**.
 
 ---
 
+## The AMD compute layer
+
+The deterministic engine gives each option one *expected* outcome. A separate
+GPU layer adds the **risk distribution around** that expected case — computed on
+an **AMD Instinct GPU** via **ROCm + PyTorch** in
+[`notebooks/amd_scenario_analysis.ipynb`](notebooks/amd_scenario_analysis.ipynb):
+
+1. **Monte Carlo** — 50,000 simulated futures per decision, varying invoice
+   collections and operating burn, → the probability payroll actually survives.
+2. **Predictive model** — a small classifier trained on the GPU that confirms
+   the deterministic risk ranking (methodology only; no model number is shown as
+   fact).
+3. **Synthetic cohort** — a generated peer group for benchmark context.
+
+**It never overrides the engine.** The Monte Carlo is *mean-preserving*: the
+average of the 50k paths reconciles with `checkFinancialHealth()`. The panel is
+additive — it shows how much residual risk remains around the deterministic
+number. In the sample scenario it reveals something the point-estimate hides:
+settling the largest invoice early (*Prioritize Client Alpha*) scores a smaller
+expected gap but a **lower** survival probability, because it trades away the
+upside variance of that invoice.
+
+The committed data in `public/data/*.json` is a snapshot; each file stamps the
+`device` it was produced on. Run the notebook on an AMD AI Notebook to
+regenerate it on the GPU (a CPU reference, `notebooks/generate_snapshot.py`,
+produces an identical-shaped snapshot for local dev). The in-app panel labels
+itself *"AMD Instinct GPU"* or *"AMD pipeline (CPU snapshot)"* accordingly, and
+hides itself whenever the owner edits the numbers (the snapshot no longer
+applies).
+
 ## Tech stack
 
 - [Next.js 14](https://nextjs.org/) (App Router, streaming route handler)
@@ -155,6 +185,7 @@ result came from **Fireworks AI** or the **offline fallback**.
 - Tailwind CSS
 - [Recharts](https://recharts.org/) for the cash projection chart
 - [Fireworks AI](https://fireworks.ai) for the boardroom agents
+- **AMD Instinct GPU (ROCm + PyTorch)** for the Monte Carlo scenario layer
 
 ## Getting started
 
@@ -210,6 +241,14 @@ project-prism/
 │   ├── fireworks.ts        # Server-only Fireworks calls + schema enforcement
 │   ├── boardroom.ts        # Shared streamed-event protocol + phase types
 │   └── useBoardroom.ts     # Client hook: streams /api/boardroom
+├── notebooks/
+│   ├── amd_scenario_analysis.ipynb # GPU Monte Carlo + model + cohort (AMD/ROCm)
+│   ├── scenario_core.py            # Shared math, mirrors the TS engine
+│   └── generate_snapshot.py        # CPU reference that writes the same JSON
+├── public/data/                    # Committed snapshot consumed by the app
+│   ├── scenario_analysis.json      # Per-option payroll-survival distribution
+│   ├── cohort.json                 # Synthetic peer group
+│   └── model_card.json             # Predictive-model methodology card
 ├── MASTER_SPEC.md          # Full product spec
 ├── BUILD_PLAN.md           # Milestone plan
 └── .env.example            # Fireworks env vars

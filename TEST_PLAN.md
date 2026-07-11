@@ -46,6 +46,17 @@ documents the deterministic tests that should be added if a runner is introduced
 - Returns 1 when payroll amount is zero or negative.
 - Reflects the selected action's projected cash before payroll divided by payroll amount.
 
+## Boardroom Agent Stance (cfoStanceAction)
+
+- With `equipmentPurchase > 0`, the CFO argues `delay_equipment` (seeded Harbour
+  Coffee Roasters output is unchanged).
+- With `equipmentPurchase <= 0`, the CFO never argues to delay a nonexistent
+  purchase; it follows `recommendedAction()` instead (e.g. `prioritize_alpha`),
+  falling back to holding cash on the degenerate "delay ranks first" tie.
+- The live agents (`lib/fireworks.ts`) and the static fallback (`lib/agents.ts`)
+  select the SAME stance action for the same input, so their recommendations
+  never diverge.
+
 ## Boardroom API Validation
 
 - Falls back to the demo company for malformed request bodies.

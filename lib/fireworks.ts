@@ -12,7 +12,8 @@
 
 import type { FinancialState } from "./financialState";
 import type { FinancialHealth } from "./healthCheck";
-import { payrollCoverageScore, type AgentResponse } from "./agents";
+import { cfoStanceAction, payrollCoverageScore, type AgentResponse } from "./agents";
+import { largestInvoice, type DecisionAction } from "./simulation";
 
 export const FIREWORKS_MODEL =
   process.env.FIREWORKS_MODEL ?? "accounts/fireworks/models/minimax-m3";
@@ -101,15 +102,37 @@ Rules:
 - "payrollCoverageScore" is a number between 0 and 1.
 - Only reference the financial figures provided. Compute every derived metric from them; never invent raw numbers.`;
 
-const cfoSystem = (state: FinancialState) =>
-  `You are the CFO of a small business, speaking in a live financial boardroom. Be conservative and plain-spoken: your mandate is to protect payroll.
-Your recommendation is to "Delay Equipment Purchase". Argue that cutting a scheduled cash outflow is the clearest way to protect payroll, and that relying on overdue balances adds timing risk.
-Set payrollCoverageScore to ${payrollCoverageScore(
-    state,
-    "delay_equipment"
-  ).toFixed(2)}. This is the deterministic confidence that your recommendation protects payroll.
+// What the CFO is instructed to argue when there is no equipment to delay. The
+// stance follows the deterministic recommendation, so the CFO never argues to
+// delay a purchase that doesn't exist.
+function cfoDirective(state: FinancialState, action: DecisionAction): string {
+  if (action === "prioritize_alpha") {
+    const t = largestInvoice(state);
+    return `There is no scheduled equipment purchase to delay. Your recommendation is to prioritize ${
+      t?.client ?? "the largest overdue account"
+    }'s ${rm(
+      t?.amount ?? 0
+    )} overdue balance — the deterministically strongest cash lever to protect payroll. Argue for the surest cash cover, not a discretionary cut.`;
+  }
+  if (action === "early_payment_discount") {
+    return `There is no scheduled equipment purchase to delay. Your recommendation is to offer an early-payment discount that pulls overdue receivables into cash before payroll. Argue that converting balances to cash now is more reliable than waiting on their terms.`;
+  }
+  return `There is no scheduled equipment purchase to delay, and no receivables lever closes the gap. Your recommendation is to preserve the cash on hand and take on no new commitments before payroll.`;
+}
+
+const cfoSystem = (state: FinancialState) => {
+  const action = cfoStanceAction(state);
+  const score = payrollCoverageScore(state, action).toFixed(2);
+  const stance =
+    action === "delay_equipment"
+      ? `Your recommendation is to "Delay Equipment Purchase". Argue that cutting a scheduled cash outflow is the clearest way to protect payroll, and that relying on overdue balances adds timing risk.`
+      : cfoDirective(state, action);
+  return `You are the CFO of a small business, speaking in a live financial boardroom. Be conservative and plain-spoken: your mandate is to protect payroll.
+${stance}
+Set payrollCoverageScore to ${score}. This is the deterministic confidence that your recommendation protects payroll.
 Write short, natural sentences fit for an urgent 3-minute board overview. Sound like an executive with something at stake, not a chatbot.
 ${SCHEMA_INSTRUCTION}`;
+};
 
 const collectionsSystem = (state: FinancialState) => {
   const target = primaryReceivable(state);
@@ -256,7 +279,7 @@ export async function runCFO(
   return parseAgent(
     content,
     "CFO",
-    payrollCoverageScore(state, "delay_equipment")
+    payrollCoverageScore(state, cfoStanceAction(state))
   );
 }
 

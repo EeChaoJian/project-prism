@@ -150,33 +150,33 @@ result came from **Fireworks AI** or the **offline fallback**.
 
 ## The AMD compute layer
 
-The deterministic engine gives each option one *expected* outcome. A separate
-GPU layer adds the **risk distribution around** that expected case — computed on
-an **AMD Instinct GPU** via **ROCm + PyTorch** in
-[`notebooks/amd_scenario_analysis.ipynb`](notebooks/amd_scenario_analysis.ipynb):
+The deterministic engine gives each option one *expected* outcome. The
+**Scenario analysis** panel adds the **risk distribution around** it: 50,000
+simulated futures per decision, varying invoice collections and operating burn,
+summarised as the probability that payroll actually survives.
 
-1. **Monte Carlo** — 50,000 simulated futures per decision, varying invoice
-   collections and operating burn, → the probability payroll actually survives.
+**In the app, it computes live.** `lib/scenario.ts` runs the simulation in the
+browser by re-using the real engine (`simulateDecision` + `checkFinancialHealth`),
+so it is a genuine feature for **any** business the owner enters and can never
+drift from the deterministic numbers — the mean of the paths reconciles with the
+engine, and it recomputes the moment any input changes.
+
+**At scale, it runs on an AMD Instinct GPU.**
+[`notebooks/amd_scenario_analysis.ipynb`](notebooks/amd_scenario_analysis.ipynb)
+runs the same style of analysis on **AMD Instinct (ROCm + PyTorch)** at much
+larger scale, and does two more things a browser can't:
+
+1. **Monte Carlo** — 50,000 paths per option on the GPU.
 2. **Predictive model** — a small classifier trained on the GPU that confirms
    the deterministic risk ranking (methodology only; no model number is shown as
    fact).
 3. **Synthetic cohort** — a generated peer group for benchmark context.
 
-**It never overrides the engine.** The Monte Carlo is *mean-preserving*: the
-average of the 50k paths reconciles with `checkFinancialHealth()`. The panel is
-additive — it shows how much residual risk remains around the deterministic
-number. In the sample scenario it reveals something the point-estimate hides:
-settling the largest invoice early (*Prioritize Client Alpha*) scores a smaller
-expected gap but a **lower** survival probability, because it trades away the
-upside variance of that invoice.
-
-The committed data in `public/data/*.json` is a snapshot; each file stamps the
-`device` it was produced on. Run the notebook on an AMD AI Notebook to
-regenerate it on the GPU (a CPU reference, `notebooks/generate_snapshot.py`,
-produces an identical-shaped snapshot for local dev). The in-app panel labels
-itself *"AMD Instinct GPU"* or *"AMD pipeline (CPU snapshot)"* accordingly, and
-hides itself whenever the owner edits the numbers (the snapshot no longer
-applies).
+Its committed output lives in `public/data/*.json` (each file stamps the
+`device` it ran on — the current snapshot was produced on an AMD Instinct GPU
+via ROCm). A CPU reference, `notebooks/generate_snapshot.py`, reproduces the
+same JSON shape without a GPU. The app's live engine is the source of truth for
+the numbers on screen; the notebook is the at-scale GPU run and validation.
 
 ## Tech stack
 

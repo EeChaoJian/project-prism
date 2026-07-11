@@ -1,15 +1,15 @@
 {
-  "device": "cpu (x86_64) \u2014 snapshot; regenerate on AMD to stamp GPU",
-  "generatedAt": "2026-07-11T06:14:13+00:00",
+  "device": "AMD Instinct GPU (ROCm) — torch 2.9.1+gitff65f5b",
+  "generatedAt": "2026-07-11T07:38:39+00:00",
   "model": "logistic regression (4 features)",
   "trainingRows": 20000,
   "synthetic": true,
   "validationAuc": 0.949,
-  "note": "Trained on synthetic SME-months to validate the deterministic risk ranking. Methodology artifact only \u2014 not shown to the user as fact.",
+  "note": "Trained on synthetic SME-months to validate the deterministic risk ranking. Methodology artifact only.",
   "featureWeights": {
-    "cash": 1.398,
-    "payrollGap": -2.505,
-    "runway": 0.837,
-    "receivableConcentration": 0.034
+    "cash": 1.797,
+    "payrollGap": -3.16,
+    "runway": 1.063,
+    "receivableConcentration": -0.008
   }
 }

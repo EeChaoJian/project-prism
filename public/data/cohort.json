@@ -1,19 +1,19 @@
 {
-  "device": "cpu (x86_64) \u2014 snapshot; regenerate on AMD to stamp GPU",
-  "generatedAt": "2026-07-11T06:14:13+00:00",
+  "device": "AMD Instinct GPU (ROCm) — torch 2.9.1+gitff65f5b",
+  "generatedAt": "2026-07-11T07:38:39+00:00",
   "cohortId": "CH-RETAIL-SUPPLY-04",
   "industry": "Retail & F&B Supply",
   "sampleSize": 147,
   "synthetic": true,
-  "note": "Synthetic demo cohort \u2014 generated, not sourced from any registry.",
+  "note": "Synthetic demo cohort — generated, not sourced from any registry.",
   "matchingCriteria": [
     "Runway < 20 days",
     "Payroll Gap > RM4,000",
     "Highly concentrated overdue accounts receivable"
   ],
   "historicalOutcomes": {
-    "delayEquipmentSuccessRate": 0.912,
-    "discountInflowAccelerationDays": 11.0,
-    "defaultRateIfNoAction": 0.741
+    "delayEquipmentSuccessRate": 0.878,
+    "discountInflowAccelerationDays": 11.1,
+    "defaultRateIfNoAction": 0.673
   }
 }

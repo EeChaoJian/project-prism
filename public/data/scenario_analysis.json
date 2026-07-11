@@ -1,6 +1,6 @@
 {
-  "device": "cpu (x86_64) \u2014 snapshot; regenerate on AMD to stamp GPU",
-  "generatedAt": "2026-07-11T06:14:13+00:00",
+  "device": "AMD Instinct GPU (ROCm) — torch 2.9.1+gitff65f5b",
+  "generatedAt": "2026-07-11T07:38:39+00:00",
   "method": "Monte Carlo over invoice-collection and operating-burn variance",
   "paths": 50000,
   "seed": 20260711,
@@ -12,42 +12,42 @@
     {
       "action": "delay_equipment",
       "label": "Delay Equipment Purchase",
-      "survivalProbability": 0.4619,
+      "survivalProbability": 0.4595,
       "deterministicProjectedCash": 16445,
       "deterministicPayrollGap": 1555,
-      "meanProjectedCash": 16455,
-      "p10ProjectedCash": 8789,
-      "p90ProjectedCash": 23574
+      "meanProjectedCash": 16496,
+      "p10ProjectedCash": 8912,
+      "p90ProjectedCash": 23558
     },
     {
       "action": "early_payment_discount",
       "label": "Offer Early Payment Discount",
-      "survivalProbability": 0.4007,
+      "survivalProbability": 0.3988,
       "deterministicProjectedCash": 15645,
       "deterministicPayrollGap": 2355,
-      "meanProjectedCash": 15650,
-      "p10ProjectedCash": 7992,
-      "p90ProjectedCash": 22734
+      "meanProjectedCash": 15652,
+      "p10ProjectedCash": 8053,
+      "p90ProjectedCash": 22811
     },
     {
       "action": "do_nothing",
       "label": "Do Nothing",
-      "survivalProbability": 0.0434,
+      "survivalProbability": 0.0423,
       "deterministicProjectedCash": 9445,
       "deterministicPayrollGap": 8555,
-      "meanProjectedCash": 9457,
-      "p10ProjectedCash": 1802,
-      "p90ProjectedCash": 16593
+      "meanProjectedCash": 9437,
+      "p10ProjectedCash": 1899,
+      "p90ProjectedCash": 16563
     },
     {
       "action": "prioritize_alpha",
       "label": "Prioritize Client Alpha",
-      "survivalProbability": 0.0215,
+      "survivalProbability": 0.0213,
       "deterministicProjectedCash": 10445,
       "deterministicPayrollGap": 7555,
-      "meanProjectedCash": 10444,
-      "p10ProjectedCash": 4759,
-      "p90ProjectedCash": 16075
+      "meanProjectedCash": 10453,
+      "p10ProjectedCash": 4771,
+      "p90ProjectedCash": 16048
     }
   ]
 }

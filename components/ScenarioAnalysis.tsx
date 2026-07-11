@@ -60,13 +60,13 @@ export default function ScenarioAnalysis({
           The comparison above shows each option&apos;s expected outcome. This is
           the risk <em>around</em> it — how often payroll actually survives once
           collections and operating burn vary.{" "}
-          {best.survivalProbability < 0.6
+          {best.survivalProbability < 0.5
             ? `Even the strongest option holds in only ${pct(
                 best.survivalProbability
               )} of futures: a severe position, not a solved one.`
-            : `The strongest option holds in ${pct(
+            : `The strongest option protects payroll in ${pct(
                 best.survivalProbability
-              )} of futures.`}
+              )} of futures — clearly ahead of the alternatives, but not risk-free.`}
         </p>
       </div>
 

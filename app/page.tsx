@@ -11,6 +11,7 @@ import CashFlowChart from "@/components/CashFlowChart";
 import BoardroomStatus from "@/components/BoardroomStatus";
 import OrchestrationConsole from "@/components/OrchestrationConsole";
 import CompanyOnboardingForm from "@/components/CompanyOnboardingForm";
+import ScenarioAnalysis from "@/components/ScenarioAnalysis";
 import EmergencyBriefing from "@/components/EmergencyBriefing";
 import RiskBadge from "@/components/RiskBadge";
 import {
@@ -396,6 +397,10 @@ export default function Home() {
           </details>
         </div>
       </section>
+
+      {/* GPU risk layer — the distribution around the deterministic estimate.
+          Self-hides unless the live scenario matches the computed snapshot. */}
+      <ScenarioAnalysis payrollGap={health.payrollGap} selected={selected} />
 
       {/* Simulation result */}
       {result && (

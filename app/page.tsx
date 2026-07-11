@@ -398,9 +398,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* GPU risk layer — the distribution around the deterministic estimate.
-          Self-hides unless the live scenario matches the computed snapshot. */}
-      <ScenarioAnalysis payrollGap={health.payrollGap} selected={selected} />
+      {/* Risk layer — the distribution around the deterministic estimate,
+          computed live for the current business (mirrored at scale on AMD). */}
+      <ScenarioAnalysis company={company} params={params} selected={selected} />
 
       {/* Simulation result */}
       {result && (

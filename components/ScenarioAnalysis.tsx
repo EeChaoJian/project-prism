@@ -1,53 +1,48 @@
-// Scenario analysis — the GPU risk layer.
+"use client";
+
+// Scenario analysis — the risk distribution around the deterministic estimate.
 //
 // The deterministic engine gives each option ONE expected outcome. This panel
 // adds the *distribution* around it: 50,000 simulated futures per option,
-// computed on an AMD Instinct GPU (ROCm/PyTorch), summarised as the probability
-// that payroll survives. It is additive to the deterministic result, never a
-// replacement — the mean of the paths reconciles with checkFinancialHealth().
+// summarised as the probability that payroll survives. Additive to the
+// deterministic result, never a replacement.
 //
-// Data is a committed snapshot from notebooks/amd_scenario_analysis.ipynb.
-// Because the snapshot is computed for the sample business, the panel hides
-// itself whenever the owner has edited the numbers (the analysis would no
-// longer apply — run the notebook on the new figures to refresh it).
+// It computes live (lib/scenario.ts) so it is a real feature for ANY business
+// the owner enters, always consistent with the engine. The same 50,000-path
+// simulation runs at scale on an AMD Instinct GPU in
+// notebooks/amd_scenario_analysis.ipynb (committed output in public/data) — the
+// credit line below points there rather than claiming the in-browser run used
+// the GPU.
 
-import scenario from "@/public/data/scenario_analysis.json";
-import type { DecisionAction } from "@/lib/simulation";
-
-interface ScenarioOption {
-  action: string;
-  label: string;
-  survivalProbability: number;
-  deterministicProjectedCash: number;
-  deterministicPayrollGap: number;
-  meanProjectedCash: number;
-  p10ProjectedCash: number;
-  p90ProjectedCash: number;
-}
+import { useMemo } from "react";
+import type { FinancialState } from "@/lib/financialState";
+import { computeScenario } from "@/lib/scenario";
+import type { DecisionAction, DecisionParameters } from "@/lib/simulation";
 
 const rm = (n: number) => `RM${Math.round(n).toLocaleString()}`;
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 
 interface ScenarioAnalysisProps {
-  payrollGap: number; // current deterministic gap — used to match the snapshot
+  company: FinancialState;
+  params: DecisionParameters;
   selected: DecisionAction | null;
 }
 
 export default function ScenarioAnalysis({
-  payrollGap,
+  company,
+  params,
   selected,
 }: ScenarioAnalysisProps) {
-  const options = scenario.options as ScenarioOption[];
+  // Recompute whenever the business or its assumptions change.
+  const scenario = useMemo(
+    () => computeScenario(company, params),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(company), JSON.stringify(params)]
+  );
 
-  // Only show when the live scenario matches the snapshot the GPU computed.
-  const snapshotGap = options.find((o) => o.action === "do_nothing")
-    ?.deterministicPayrollGap;
-  const matchesSnapshot =
-    snapshotGap !== undefined && Math.round(payrollGap) === snapshotGap;
-  if (!matchesSnapshot) return null;
-
-  const best = options[0]; // pre-sorted by survival probability, descending
-  const onGpu = !scenario.device.startsWith("cpu");
+  const { options, paths, payrollAmount } = scenario;
+  const best = options[0];
+  if (!best) return null;
 
   return (
     <section className="mb-12">
@@ -57,21 +52,21 @@ export default function ScenarioAnalysis({
             Scenario analysis
           </h2>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-medium text-neutral-600">
-            <span
-              className={`inline-block h-1.5 w-1.5 rounded-full ${
-                onGpu ? "bg-neutral-900" : "bg-neutral-400"
-              }`}
-            />
-            {scenario.paths.toLocaleString()} simulated futures ·{" "}
-            {onGpu ? "AMD Instinct GPU" : "AMD pipeline (CPU snapshot)"}
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-neutral-900" />
+            {paths.toLocaleString()} simulated futures
           </span>
         </div>
         <p className="mt-1 max-w-2xl text-sm text-neutral-500">
           The comparison above shows each option&apos;s expected outcome. This is
           the risk <em>around</em> it — how often payroll actually survives once
-          collections and operating burn vary. Even the strongest option holds in
-          only {pct(best.survivalProbability)} of futures: this is a severe
-          position, not a solved one.
+          collections and operating burn vary.{" "}
+          {best.survivalProbability < 0.6
+            ? `Even the strongest option holds in only ${pct(
+                best.survivalProbability
+              )} of futures: a severe position, not a solved one.`
+            : `The strongest option holds in ${pct(
+                best.survivalProbability
+              )} of futures.`}
         </p>
       </div>
 
@@ -128,11 +123,12 @@ export default function ScenarioAnalysis({
       </div>
 
       <p className="mt-3 text-xs text-neutral-400">
-        Payroll survives = projected cash clears the {rm(scenario.payrollAmount)}{" "}
-        payroll. Means reconcile with the deterministic engine; variance
-        assumptions are illustrative, not fitted from real data. Computed by{" "}
-        <span className="font-mono">notebooks/amd_scenario_analysis.ipynb</span>{" "}
-        on {scenario.device.split(" —")[0]}.
+        Payroll survives = projected cash clears the {rm(payrollAmount)} payroll.
+        Simulated live and consistent with the deterministic engine; variance
+        assumptions are illustrative, not fitted from real data. The same
+        50,000-path simulation runs at scale on an AMD Instinct GPU (ROCm /
+        PyTorch) — see{" "}
+        <span className="font-mono">notebooks/amd_scenario_analysis.ipynb</span>.
       </p>
     </section>
   );

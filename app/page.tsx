@@ -424,17 +424,19 @@ export default function Home() {
             {result.explanation}
           </p>
 
-          {/* The payoff — cash visibly moves to its new position. */}
+          {/* The payoff — projected cash at payday visibly moves to its new
+              position. This is the number that decides payroll (and the one an
+              action like delaying capex actually changes; cash-on-hand may not). */}
           <div className="mt-5 flex flex-wrap items-baseline gap-2">
             <span className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
               <CountUp
-                value={result.updatedState.cashBalance}
-                from={company.cashBalance}
+                value={result.after.projectedCashBeforePayroll}
+                from={result.before.projectedCashBeforePayroll}
                 prefix="RM"
               />
             </span>
             <span className="text-sm text-neutral-500">
-              projected cash after this decision
+              projected cash when payroll is due
             </span>
           </div>
 
@@ -538,7 +540,10 @@ function boardOutcome(companyCash: number, result: SimulationResult): string {
     return "No action taken — payroll risk remains and the board is still exposed.";
   }
   if (!result.after.payrollRisk && result.before.payrollRisk) {
-    return `Payroll protected. Runway +${runwayUp} days.`;
+    const buffer = Math.round(-result.after.payrollGap);
+    return `Payroll protected — projected cash now clears payroll${
+      buffer > 0 ? ` with RM${buffer.toLocaleString()} to spare` : ""
+    }.`;
   }
   if (result.action === "delay_equipment") {
     return `Scheduled equipment outflow delayed · payroll gap now RM${Math.round(
